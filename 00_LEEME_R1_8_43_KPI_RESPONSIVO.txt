@@ -1,0 +1,7 @@
+E-FLEET WEB R1.8.43
+
+- Base completa de R1.8.42.
+- KPI circulares del Dashboard con diámetro ligeramente mayor.
+- El texto interior se ajusta automáticamente según la longitud del valor.
+- Valores monetarios y textos largos ya no se cortan con puntos suspensivos.
+- En móvil se conserva una grilla compacta de dos columnas con reducción adaptativa.

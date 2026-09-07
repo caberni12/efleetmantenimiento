@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.42';
+const WEB_VERSION='1.8.43';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
@@ -384,9 +384,13 @@ function kpiGlyph(label=''){
  const x=String(label||'').toLowerCase();
  if(x.includes('salud'))return '♥';if(x.includes('riesgo')||x.includes('crít'))return '!';if(x.includes('mant'))return '⌁';if(x.includes('falla'))return '⚠';if(x.includes('check'))return '✓';if(x.includes('costo')||x.includes('gasto'))return '$';if(x.includes('veh'))return '▣';if(x.includes('respuesta'))return '↗';if(x.includes('prioridad'))return '◆';return '●';
 }
+function ringValueFitClass(value=''){
+ const n=String(value??'').trim().length;
+ return n>=16?'value-fit-xxs':n>=12?'value-fit-xs':n>=9?'value-fit-sm':n>=7?'value-fit-md':'value-fit-lg';
+}
 function ringKpi(label,value,progress=0,tone='blue',detail='',action=''){
- const p=Math.max(0,Math.min(100,Number(progress)||0)),money=/^\s*\$/.test(String(value||'')),click=action?` data-dashboard-detail="${esc(action)}" role="button" tabindex="0"`:'';
- return `<article class="ring-kpi ${esc(tone)}${money?' money':''}${action?' actionable':''}"${click}><div class="ring-kpi-top"><span class="ring-kpi-icon">${esc(kpiGlyph(label))}</span><span class="ring-kpi-state">EN LÍNEA</span></div><div class="ring-gauge" style="--progress:${p}"><div><strong>${esc(value)}</strong><small>INDICADOR</small></div></div><div class="ring-kpi-copy"><h4>${esc(label)}</h4>${detail?`<p>${esc(detail)}</p>`:''}</div></article>`;
+ const raw=String(value??'—'),p=Math.max(0,Math.min(100,Number(progress)||0)),money=/^\s*\$/.test(raw),fit=ringValueFitClass(raw),click=action?` data-dashboard-detail="${esc(action)}" role="button" tabindex="0"`:'';
+ return `<article class="ring-kpi ${esc(tone)} ${fit}${money?' money':''}${action?' actionable':''}"${click}><div class="ring-kpi-top"><span class="ring-kpi-icon">${esc(kpiGlyph(label))}</span><span class="ring-kpi-state">EN LÍNEA</span></div><div class="ring-gauge" style="--progress:${p}"><div><strong title="${esc(raw)}">${esc(raw)}</strong><small>INDICADOR</small></div></div><div class="ring-kpi-copy"><h4>${esc(label)}</h4>${detail?`<p>${esc(detail)}</p>`:''}</div></article>`;
 }
 function notificationFilterLabel(key=''){const map={pendientes:'Pendientes',criticas:'Críticas',prioridad_alta:'Prioridad alta',respuesta_requerida:'Respuesta requerida'};return map[key]||'Notificaciones';}
 function notificationRowsForFilter(rows,key=''){const all=[...(rows||[])];if(!key)return all;return all.filter(n=>{const awaiting=String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE');const unread=String(n.leida||'NO').toUpperCase()!=='SI';const priority=notificationPriorityClass(n);if(key==='pendientes')return unread;if(key==='criticas')return priority==='critical'&&unread;if(key==='prioridad_alta')return priority==='high'&&unread;if(key==='respuesta_requerida')return awaiting;return true})}
@@ -398,7 +402,8 @@ function clearNotificationFilter(scroll=false){S.notificationPageFilter='';rende
 function handleNotificationBack(){if(S.currentNotificationDetailId){clearNotificationInlineDetail(true);return;}if(S.notificationPageFilter){clearNotificationFilter(true);return;}showView(S.previousView&&S.previousView!=='notificaciones'?S.previousView:'dashboard');}
 
 function dashboardKpi(label,value,action,tone='blue',icon='●'){
- return `<button class="kpi kpi-actionable kpi-modern ${esc(tone)}" type="button" data-dashboard-detail="${esc(action)}"><span class="kpi-modern-icon">${esc(icon)}</span><span class="kpi-modern-copy"><small>${esc(label)}</small><strong>${esc(value)}</strong><em>Ver detalle →</em></span></button>`;
+ const raw=String(value??'—'),fit=ringValueFitClass(raw);
+ return `<button class="kpi kpi-actionable kpi-modern ${esc(tone)} ${fit}" type="button" data-dashboard-detail="${esc(action)}"><span class="kpi-modern-icon">${esc(icon)}</span><span class="kpi-modern-copy"><small>${esc(label)}</small><strong title="${esc(raw)}">${esc(raw)}</strong><em>Ver detalle →</em></span></button>`;
 }
 async function loadDashboard(){
  const j=await api('dashboard');const r=j.resumen||{};

@@ -1813,3 +1813,30 @@ html,body{
 
 /* R1.8.41 · Velocidad sin mapa */
 .speed-limit-grid,.speed-event-list{display:grid;gap:12px}.speed-limit-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.speed-limit-card,.speed-event-card{border:1px solid var(--line,#dfe5ec);border-radius:16px;padding:16px;background:#fff}.speed-limit-card{display:grid;grid-template-columns:1fr;gap:10px}.speed-limit-card h4{margin:2px 0}.speed-limit-card label{display:grid;gap:5px;font-weight:700}.speed-event-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.speed-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.speed-event-grid span,.speed-address{display:grid;gap:3px}.speed-event-grid small,.speed-address small{color:var(--muted,#667085);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.speed-address{margin-top:12px;padding-top:12px;border-top:1px solid var(--line,#e5e7eb)}
+
+
+/* ==========================================================================
+   R1.8.43 · KPI CIRCULARES RESPONSIVOS · TEXTO SIEMPRE LEGIBLE
+   ========================================================================== */
+/* Aumentamos levemente el diámetro y hacemos que el valor se adapte a su longitud. */
+#view-dashboard .ring-kpi-grid{grid-template-columns:repeat(3,minmax(190px,1fr))!important}
+#view-dashboard .ring-kpi{min-height:226px!important}
+.ring-gauge{width:120px!important;height:120px!important;padding:10px!important;margin:2px auto 11px!important}
+.ring-gauge::after{inset:10px!important}
+.ring-gauge>div{width:100%!important;display:grid!important;place-items:center!important;align-content:center!important;min-width:0!important}
+.ring-gauge strong{display:block!important;width:100%!important;max-width:92px!important;padding:0 2px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:break-word!important;text-align:center!important;line-height:1.02!important;letter-spacing:-.25px!important}
+.ring-kpi.value-fit-lg .ring-gauge strong{font-size:23px!important}
+.ring-kpi.value-fit-md .ring-gauge strong{font-size:20px!important}
+.ring-kpi.value-fit-sm .ring-gauge strong{font-size:17px!important}
+.ring-kpi.value-fit-xs .ring-gauge strong{font-size:14px!important;max-width:96px!important}
+.ring-kpi.value-fit-xxs .ring-gauge strong{font-size:12px!important;max-width:98px!important;line-height:1!important}
+/* Los monetarios dejan de usar un tamaño fijo; heredan la escala adaptativa anterior. */
+.ring-kpi.money .ring-gauge strong,.ring-kpi-grid.compact .ring-kpi.money .ring-gauge strong{font-size:inherit!important;max-width:98px!important;white-space:normal!important;overflow-wrap:anywhere!important;letter-spacing:-.35px!important}
+.ring-kpi.money.value-fit-lg .ring-gauge strong{font-size:21px!important}.ring-kpi.money.value-fit-md .ring-gauge strong{font-size:18px!important}.ring-kpi.money.value-fit-sm .ring-gauge strong{font-size:15px!important}.ring-kpi.money.value-fit-xs .ring-gauge strong{font-size:13px!important}.ring-kpi.money.value-fit-xxs .ring-gauge strong{font-size:11.5px!important}
+.ring-kpi-grid.compact .ring-gauge{width:98px!important;height:98px!important}.ring-kpi-grid.compact .ring-gauge strong{max-width:72px!important}
+.ring-kpi-grid.compact .value-fit-lg .ring-gauge strong{font-size:18px!important}.ring-kpi-grid.compact .value-fit-md .ring-gauge strong{font-size:16px!important}.ring-kpi-grid.compact .value-fit-sm .ring-gauge strong{font-size:14px!important}.ring-kpi-grid.compact .value-fit-xs .ring-gauge strong{font-size:12px!important}.ring-kpi-grid.compact .value-fit-xxs .ring-gauge strong{font-size:10.5px!important}
+/* También evitamos cortes en los KPI rectangulares superiores del Dashboard. */
+.kpi-modern-copy strong{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;line-height:1.05!important}
+.kpi-modern.value-fit-lg .kpi-modern-copy strong{font-size:27px!important}.kpi-modern.value-fit-md .kpi-modern-copy strong{font-size:25px!important}.kpi-modern.value-fit-sm .kpi-modern-copy strong{font-size:22px!important}.kpi-modern.value-fit-xs .kpi-modern-copy strong{font-size:19px!important}.kpi-modern.value-fit-xxs .kpi-modern-copy strong{font-size:17px!important}
+@media(max-width:1050px){#view-dashboard .ring-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){#view-dashboard .ring-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}#view-dashboard .ring-kpi{min-height:190px!important;padding:12px 8px 13px!important}.ring-gauge{width:94px!important;height:94px!important;padding:8px!important}.ring-gauge::after{inset:8px!important}.ring-gauge strong{max-width:70px!important}.ring-kpi.value-fit-lg .ring-gauge strong{font-size:18px!important}.ring-kpi.value-fit-md .ring-gauge strong{font-size:16px!important}.ring-kpi.value-fit-sm .ring-gauge strong{font-size:14px!important}.ring-kpi.value-fit-xs .ring-gauge strong{font-size:12px!important}.ring-kpi.value-fit-xxs .ring-gauge strong{font-size:10px!important;max-width:72px!important}.kpi-modern.value-fit-lg .kpi-modern-copy strong{font-size:21px!important}.kpi-modern.value-fit-md .kpi-modern-copy strong{font-size:19px!important}.kpi-modern.value-fit-sm .kpi-modern-copy strong{font-size:17px!important}.kpi-modern.value-fit-xs .kpi-modern-copy strong{font-size:15px!important}.kpi-modern.value-fit-xxs .kpi-modern-copy strong{font-size:13px!important}}

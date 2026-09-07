@@ -1,0 +1,1 @@
+Web R1.8.43: KPI circulares responsivos, diámetro mayor y tipografía automática por longitud; sin cortar el valor.
