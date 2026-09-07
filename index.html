@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f8fcff">
   <title>E-Fleet Mantenimiento Inteligente</title>
   <link rel="icon" type="image/png" href="efleet-login-mark-r1819.png?v=1819">
-  <link rel="stylesheet" href="styles.css?v=1840">
+  <link rel="stylesheet" href="styles.css?v=1841">
   <style id="efleet-shell-r170">
     /* Respaldo crítico integrado: evita que una hoja antigua deje el menú desbordado. */
     #sidebar{display:flex!important;flex-direction:column!important;height:100vh!important;height:100dvh!important;min-height:0!important;overflow:hidden!important}
@@ -107,6 +107,7 @@
       <button data-view="predicciones">✦ Análisis predictivo</button>
       <button data-view="notificaciones">🔔 Notificaciones y alertas</button>
       <button data-view="combustible">⛽ Combustible</button>
+      <button data-view="velocidad">🚨 Velocidad</button>
       <button data-view="presupuesto" class="nav-management">💰 Presupuesto Operacional</button>
       <button data-view="reportes">📊 Reportes PDF / XLSX</button>
       <button data-view="manual" class="nav-help">❓ Manual de Uso / Ayuda</button>
@@ -623,6 +624,12 @@
     </section>
 
 
+    <section id="view-velocidad" class="view">
+      <div class="module-hero speed-hero"><div><span class="hero-icon">🚨</span><div><span class="module-eyebrow">SEGURIDAD · ADMINISTRADOR / GERENCIA / OPERADOR</span><h3>Control de velocidad</h3><p>Límites por patente y excesos detectados. Sin mapas ni recorridos; la dirección se captura únicamente en el momento del exceso.</p></div></div></div>
+      <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">PARAMETRIZACIÓN</span><h3>Límites por patente</h3></div><small>10–220 km/h</small></div><div id="speedVehicleLimits" class="speed-limit-grid"></div></section>
+      <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">ALERTAS REGISTRADAS</span><h3>Excesos de velocidad</h3></div><small>Sin mapa</small></div><div id="speedEvents" class="speed-event-list"></div></section>
+    </section>
+
     <section id="view-manual" class="view">
       <div class="module-hero manual-module-hero">
         <div><span class="hero-icon">❓</span><div><span class="module-eyebrow">AYUDA INTEGRADA · WEB + ANDROID</span><h3>Manual de Uso E-FLEET</h3><p>Consulta procedimientos, roles, QR, Checklist, mantenciones, combustible, presupuesto, reportes y solución de problemas sin salir del sistema.</p></div></div>
@@ -836,6 +843,6 @@
 
 <script src="qrcode_WEB_R1_8_0.min.js"></script>
 <script src="exporters_R1_8_0.js?v=1832f"></script>
-<script src="app.js?v=1840"></script>
+<script src="app.js?v=1841"></script>
 </body>
 </html>

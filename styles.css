@@ -1810,3 +1810,6 @@ html,body{
 .login-password-toggle.showing .eye-closed{display:block;}
 .login-enter-hint{display:block;margin-top:6px;color:#728399;font-size:11px;font-weight:650;}
 @media(max-width:520px){.login-enter-hint{font-size:10px}.login-password-toggle{right:6px!important;}}
+
+/* R1.8.41 · Velocidad sin mapa */
+.speed-limit-grid,.speed-event-list{display:grid;gap:12px}.speed-limit-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.speed-limit-card,.speed-event-card{border:1px solid var(--line,#dfe5ec);border-radius:16px;padding:16px;background:#fff}.speed-limit-card{display:grid;grid-template-columns:1fr;gap:10px}.speed-limit-card h4{margin:2px 0}.speed-limit-card label{display:grid;gap:5px;font-weight:700}.speed-event-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.speed-event-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.speed-event-grid span,.speed-address{display:grid;gap:3px}.speed-event-grid small,.speed-address small{color:var(--muted,#667085);font-size:11px;text-transform:uppercase;letter-spacing:.04em}.speed-address{margin-top:12px;padding-top:12px;border-top:1px solid var(--line,#e5e7eb)}
