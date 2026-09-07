@@ -626,7 +626,16 @@
 
     <section id="view-velocidad" class="view">
       <div class="module-hero speed-hero"><div><span class="hero-icon">🚨</span><div><span class="module-eyebrow">SEGURIDAD · ADMINISTRADOR / GERENCIA / OPERADOR</span><h3>Control de velocidad</h3><p>Límites por patente y excesos detectados. Sin mapas ni recorridos; la dirección se captura únicamente en el momento del exceso.</p></div></div></div>
-      <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">PARAMETRIZACIÓN</span><h3>Límites por patente</h3></div><small>10–220 km/h</small></div><div id="speedVehicleLimits" class="speed-limit-grid"></div></section>
+      <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">PARAMETRIZACIÓN</span><h3>Límites por patente</h3></div><small>10–220 km/h</small></div>
+        <div class="speed-control-toolbar">
+          <div class="speed-search-group"><label class="speed-control-field speed-search-field"><span>Buscar vehículo</span><input id="speedVehicleSearch" type="search" autocomplete="off" enterkeyhint="search" placeholder="Patente, marca o modelo"></label><button id="speedSearchButton" class="primary speed-search-button" type="button">Buscar</button></div>
+          <label class="speed-control-field"><span>Velocidad máxima km/h</span><input id="speedGlobalLimit" type="number" min="10" max="220" step="1" placeholder="Ej. 90" disabled></label>
+          <label class="speed-select-all"><input id="speedSelectAll" type="checkbox"><span><strong>Seleccionar todo</strong><small>Aplicar el mismo límite a toda la flota</small></span></label>
+          <button id="speedApplyGlobal" class="primary speed-global-apply" type="button" disabled>Aplicar a toda la flota</button>
+        </div>
+        <div id="speedBulkHint" class="speed-bulk-hint">Seleccionar todo está desactivado: cada vehículo utilizará su límite individual parametrizado por patente.</div>
+        <div id="speedVehicleLimits" class="speed-limit-grid"></div>
+      </section>
       <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">ALERTAS REGISTRADAS</span><h3>Excesos de velocidad</h3></div><small>Sin mapa</small></div><div id="speedEvents" class="speed-event-list"></div></section>
     </section>
 

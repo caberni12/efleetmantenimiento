@@ -1913,3 +1913,121 @@ body #nexoPanel.nexo-panel{
   .app-shell>main>header{padding-top:8px!important;padding-bottom:8px!important;min-height:60px!important}
   body #nexoPanel.nexo-panel{max-height:calc(100dvh - 196px)!important}
 }
+
+/* ========================================================================== */
+/* R1.8.45 · HEADER UNA SOLA FILA CON SIDEBAR ABIERTO                         */
+/* ========================================================================== */
+/*
+   R1.8.37 tenía una regla que bajaba .header-actions a una segunda fila entre
+   761 y 1450 px cuando el sidebar estaba abierto. R1.8.45 la anula: empresa y
+   acciones permanecen en la misma línea del header.
+*/
+@media(min-width:761px){
+  .app-shell>main>header,
+  .app-shell:not(.sidebar-collapsed)>main>header,
+  .app-shell.sidebar-collapsed>main>header{
+    grid-template-columns:minmax(0,1fr) max-content!important;
+    grid-template-rows:var(--ef-header-height)!important;
+    align-items:center!important;
+    row-gap:0!important;
+    min-height:var(--ef-header-height)!important;
+    height:var(--ef-header-height)!important;
+    max-height:var(--ef-header-height)!important;
+    overflow:visible!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .header-actions,
+  .app-shell.sidebar-collapsed .header-actions,
+  .header-actions{
+    grid-column:2!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    align-self:center!important;
+    width:auto!important;
+    min-width:max-content!important;
+    margin:0!important;
+    white-space:nowrap!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .header-main,
+  .app-shell.sidebar-collapsed .header-main,
+  .header-main{
+    grid-column:1!important;
+    grid-row:1!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+}
+
+/* Escritorio normal: conserva el header de 52 px y gana espacio horizontal. */
+@media(min-width:1101px){
+  .app-shell:not(.sidebar-collapsed) .header-main{
+    grid-template-columns:36px minmax(110px,1fr) max-content!important;
+    gap:8px!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .company-nav-cluster{gap:6px!important}
+  .app-shell:not(.sidebar-collapsed) .company-nav-cluster .company-identity{
+    width:258px!important;min-width:220px!important;max-width:258px!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .header-actions{gap:6px!important}
+  .app-shell:not(.sidebar-collapsed) #btnRefresh{
+    min-width:94px!important;width:auto!important;padding:0 10px!important;
+  }
+}
+
+/* Escritorio/tablet angosto: todo sigue en una línea; se compacta, no se baja. */
+@media(min-width:901px) and (max-width:1100px){
+  .app-shell>main>header{
+    padding:5px 12px!important;
+    column-gap:5px!important;
+  }
+  .header-main,
+  .app-shell:not(.sidebar-collapsed) .header-main{
+    grid-template-columns:32px minmax(70px,1fr) max-content!important;
+    gap:6px!important;height:42px!important;
+  }
+  .sidebar-toggle{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;padding:7px!important;border-radius:9px!important}
+  .sidebar-toggle span{width:18px!important}
+  .header-copy h2{font-size:18px!important}
+  .company-nav-cluster{gap:5px!important;height:38px!important;margin:0!important;width:auto!important;order:initial!important}
+  .company-nav-cluster .page-back-button{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;border-radius:9px!important;font-size:16px!important}
+  .company-nav-cluster .company-identity{width:205px!important;min-width:180px!important;max-width:205px!important;height:36px!important;min-height:36px!important;padding:3px 7px!important;gap:6px!important}
+  .company-logo-header{width:26px!important;height:26px!important;border-radius:7px!important}
+  .company-identity small{font-size:7px!important;line-height:1!important}
+  .company-identity strong{font-size:10.5px!important;line-height:1.05!important}
+  .header-actions{gap:4px!important;height:38px!important}
+  .notification-bell,.module-export-button,.profile-button{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;flex-basis:32px!important;border-radius:9px!important}
+  .profile-wrap{min-width:32px!important}
+  .profile-button{border-radius:50%!important}
+  .notification-bell .bell-icon{font-size:15px!important}
+  .excel-icon{width:20px!important;height:20px!important;font-size:10px!important}
+  #btnRefresh{height:32px!important;min-height:32px!important;min-width:32px!important;width:32px!important;padding:0!important;font-size:0!important;border-radius:9px!important}
+  #btnRefresh::before{content:'↻';font-size:16px!important}
+}
+
+/* Muy cerca del breakpoint móvil: priorizamos una sola fila y truncamos texto. */
+@media(min-width:761px) and (max-width:900px){
+  .app-shell>main>header{padding:5px 8px!important;column-gap:3px!important}
+  .header-main,.app-shell:not(.sidebar-collapsed) .header-main{grid-template-columns:28px minmax(34px,1fr) max-content!important;gap:4px!important;height:40px!important}
+  .sidebar-toggle{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;padding:6px!important;border-radius:8px!important}.sidebar-toggle span{width:16px!important}
+  .header-copy h2{font-size:15px!important}
+  .company-nav-cluster{gap:3px!important;height:34px!important;margin:0!important;width:auto!important;order:initial!important}
+  .company-nav-cluster .page-back-button{width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important;border-radius:8px!important;font-size:14px!important}
+  .company-nav-cluster .company-identity{width:138px!important;min-width:120px!important;max-width:138px!important;height:32px!important;min-height:32px!important;padding:2px 5px!important;gap:4px!important}
+  .company-logo-header{width:22px!important;height:22px!important;border-radius:6px!important}
+  .company-identity small{display:none!important}.company-identity strong{font-size:9px!important;line-height:1!important}
+  .header-actions{gap:2px!important;height:34px!important}
+  .notification-bell,.module-export-button,.profile-button{width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;flex-basis:28px!important;border-radius:8px!important;padding:0!important}
+  .profile-wrap{min-width:28px!important}.profile-button{border-radius:50%!important}.notification-bell .bell-icon{font-size:13px!important}.excel-icon{width:18px!important;height:18px!important;font-size:9px!important}
+  #btnRefresh{height:28px!important;min-height:28px!important;min-width:28px!important;width:28px!important;padding:0!important;font-size:0!important;border-radius:8px!important}#btnRefresh::before{content:'↻';font-size:14px!important}
+}
+
+/* R1.8.46 · Control de velocidad: búsqueda rápida + parametrización global */
+.speed-control-toolbar{display:grid;grid-template-columns:minmax(320px,1.45fr) minmax(180px,.7fr) minmax(220px,.9fr) auto;gap:12px;align-items:end;margin:0 0 10px}.speed-control-field{display:grid;gap:6px;font-weight:800}.speed-control-field>span{font-size:12px;color:var(--muted,#667085);text-transform:uppercase;letter-spacing:.04em}.speed-control-field input{width:100%;min-height:44px;border:1px solid var(--line,#dfe5ec);border-radius:12px;padding:0 13px;background:#fff;color:var(--ink,#102a43);font:inherit}.speed-select-all{min-height:44px;display:flex;align-items:center;gap:10px;border:1px solid var(--line,#dfe5ec);border-radius:12px;padding:7px 12px;background:#f8fbff;cursor:pointer}.speed-select-all input{width:19px;height:19px;accent-color:#0b95e5;flex:0 0 auto}.speed-select-all span{display:grid;gap:1px}.speed-select-all strong{font-size:13px}.speed-select-all small{font-size:11px;color:var(--muted,#667085)}.speed-global-apply{min-height:44px;white-space:nowrap}.speed-global-apply:disabled,.speed-control-field input:disabled{opacity:.55;cursor:not-allowed}.speed-bulk-hint{margin:0 0 14px;padding:9px 12px;border-radius:10px;background:#f7f9fc;color:#5f6b7a;font-size:12px;border:1px solid #e7ebf0}.speed-bulk-hint.is-global{background:#eef9ff;border-color:#b9e5fb;color:#0b5f8f}.speed-search-field input::-webkit-search-cancel-button{cursor:pointer}
+.speed-search-group{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}.speed-search-button{min-height:44px;min-width:86px;white-space:nowrap}
+@media(max-width:1100px){.speed-control-toolbar{grid-template-columns:1fr 1fr}.speed-global-apply{width:100%}}
+@media(max-width:700px){.speed-control-toolbar{grid-template-columns:1fr}.speed-search-group{grid-template-columns:1fr auto}.speed-select-all,.speed-global-apply{width:100%}}
+
+/* R1.8.48: el filtro de velocidad debe prevalecer sobre display:grid de la tarjeta */
+.speed-limit-card.speed-filter-hidden{display:none!important}
+
+/* R1.8.49 · buscador velocidad: render parcial sin relayout masivo */
+.speed-filter-note{grid-column:1/-1;padding:10px 12px;border-radius:10px;background:#f7f9fc;color:#667085;font-size:12px;border:1px solid #e7ebf0}
