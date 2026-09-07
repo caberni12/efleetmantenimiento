@@ -1,0 +1,6 @@
+E-FLEET WEB R1.8.44
+- Header superior de escritorio: 52 px exactos.
+- Controles internos compactados proporcionalmente.
+- NEXO conserva al menos 12 px de separación bajo el header y ya no queda tapado.
+- En resoluciones intermedias se conserva adaptación responsiva para evitar superposición de acciones.
+- Sin cambios de API, SQL ni lógica Android respecto de R1.8.43.

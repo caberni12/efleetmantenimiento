@@ -1840,3 +1840,76 @@ html,body{
 .kpi-modern.value-fit-lg .kpi-modern-copy strong{font-size:27px!important}.kpi-modern.value-fit-md .kpi-modern-copy strong{font-size:25px!important}.kpi-modern.value-fit-sm .kpi-modern-copy strong{font-size:22px!important}.kpi-modern.value-fit-xs .kpi-modern-copy strong{font-size:19px!important}.kpi-modern.value-fit-xxs .kpi-modern-copy strong{font-size:17px!important}
 @media(max-width:1050px){#view-dashboard .ring-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:620px){#view-dashboard .ring-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}#view-dashboard .ring-kpi{min-height:190px!important;padding:12px 8px 13px!important}.ring-gauge{width:94px!important;height:94px!important;padding:8px!important}.ring-gauge::after{inset:8px!important}.ring-gauge strong{max-width:70px!important}.ring-kpi.value-fit-lg .ring-gauge strong{font-size:18px!important}.ring-kpi.value-fit-md .ring-gauge strong{font-size:16px!important}.ring-kpi.value-fit-sm .ring-gauge strong{font-size:14px!important}.ring-kpi.value-fit-xs .ring-gauge strong{font-size:12px!important}.ring-kpi.value-fit-xxs .ring-gauge strong{font-size:10px!important;max-width:72px!important}.kpi-modern.value-fit-lg .kpi-modern-copy strong{font-size:21px!important}.kpi-modern.value-fit-md .kpi-modern-copy strong{font-size:19px!important}.kpi-modern.value-fit-sm .kpi-modern-copy strong{font-size:17px!important}.kpi-modern.value-fit-xs .kpi-modern-copy strong{font-size:15px!important}.kpi-modern.value-fit-xxs .kpi-modern-copy strong{font-size:13px!important}}
+
+/* ==========================================================================
+   R1.8.44 · HEADER WEB COMPACTO 52 PX + NEXO SIEMPRE LIBRE
+   ========================================================================== */
+:root{--ef-header-height:52px;--ef-nexo-header-gap:12px}
+
+/* Escritorio: barra superior fina de 52 px exactos. */
+@media(min-width:1101px){
+  .app-shell>main>header{
+    height:var(--ef-header-height)!important;
+    min-height:var(--ef-header-height)!important;
+    max-height:var(--ef-header-height)!important;
+    padding:5px 26px!important;
+    column-gap:12px!important;
+    row-gap:0!important;
+    overflow:visible!important;
+  }
+  .app-shell:not(.sidebar-collapsed)>main>header,
+  .app-shell.sidebar-collapsed>main>header{
+    grid-template-columns:minmax(0,1fr) max-content!important;
+  }
+  .header-main{
+    grid-template-columns:38px minmax(180px,1fr) max-content!important;
+    gap:9px!important;
+    height:42px!important;
+  }
+  .sidebar-toggle{
+    width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;
+    border-radius:11px!important;padding:8px!important;
+  }
+  .header-copy h2{font-size:21px!important;line-height:1.1!important}
+  .company-nav-cluster{gap:7px!important;height:42px!important}
+  .company-nav-cluster .page-back-button{
+    width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;
+    border-radius:10px!important;font-size:18px!important;
+  }
+  .company-nav-cluster .company-identity{
+    width:286px!important;min-width:250px!important;max-width:286px!important;
+    height:40px!important;min-height:40px!important;
+    padding:3px 9px!important;gap:8px!important;border-radius:11px!important;
+  }
+  .company-logo-header{width:30px!important;height:30px!important;border-radius:8px!important}
+  .company-identity small{font-size:8px!important;line-height:1!important;letter-spacing:.7px!important}
+  .company-identity strong{font-size:12px!important;line-height:1.15!important}
+  .header-actions{gap:7px!important;height:42px!important}
+  .notification-bell,
+  .module-export-button,
+  .profile-button{
+    width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;
+    flex:0 0 36px!important;border-radius:10px!important;
+  }
+  .profile-wrap{min-width:36px!important}
+  .profile-button{border-radius:50%!important}
+  .notification-bell .bell-icon{font-size:16px!important}
+  .module-export-button{font-size:10px!important}
+  #btnRefresh{
+    height:36px!important;min-height:36px!important;min-width:102px!important;
+    padding:0 12px!important;border-radius:10px!important;font-size:12px!important;
+  }
+  .notification-count{top:-6px!important;right:-6px!important}
+}
+
+/* NEXO nunca queda debajo del header: conserva 12 px de aire como mínimo. */
+body #nexoPanel.nexo-panel{
+  height:min(640px,calc(100dvh - var(--ef-header-height) - 124px))!important;
+  max-height:calc(100dvh - var(--ef-header-height) - 124px)!important;
+}
+
+/* En tamaños intermedios mantenemos una barra compacta sin forzar 52 px si las acciones necesitan envolver. */
+@media(min-width:761px) and (max-width:1100px){
+  .app-shell>main>header{padding-top:8px!important;padding-bottom:8px!important;min-height:60px!important}
+  body #nexoPanel.nexo-panel{max-height:calc(100dvh - 196px)!important}
+}
