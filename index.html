@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8fcff">
+  <title>E-Fleet Mantenimiento Inteligente</title>
+  <link rel="icon" type="image/png" href="efleet-login-mark-r1819.png?v=1819">
+  <link rel="stylesheet" href="styles.css?v=1833">
+  <style id="efleet-shell-r170">
+    /* Respaldo crítico integrado: evita que una hoja antigua deje el menú desbordado. */
+    #sidebar{display:flex!important;flex-direction:column!important;height:100vh!important;height:100dvh!important;min-height:0!important;overflow:hidden!important}
+    #sidebar #nav{display:flex!important;flex:1 1 auto!important;min-height:0!important;overflow-y:scroll!important;overscroll-behavior:contain!important;scrollbar-width:auto!important}
+    #sidebarToggle{display:flex!important;visibility:visible!important}
+    @media(max-width:760px){
+      #appView{display:block!important}
+      #sidebar{position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:min(86vw,310px)!important;min-width:min(86vw,310px)!important;z-index:120!important;transform:translateX(-104%)!important;transition:transform .22s ease!important}
+      #appView.sidebar-open #sidebar{transform:translateX(0)!important}
+      #sidebarBackdrop{display:none!important;position:fixed!important;inset:0!important;z-index:110!important;background:#1018288f!important}
+      #appView.sidebar-open #sidebarBackdrop{display:block!important}
+      #appView>main{display:block!important;margin:0!important;width:100%!important}
+    }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<section id="accessView" class="access-shell">
+  <div class="brand-card">
+    <div class="brand-mark"><img src="efleet-login-mark-r1819.png?v=1819" alt="E-Fleet Mantenimiento Inteligente"></div>
+    <div>
+      <h1>E-Fleet</h1>
+      <p>Mantenimiento Inteligente</p>
+    </div>
+  </div>
+
+  <div class="access-card">
+    <div id="stepCompany">
+      <h2>Empresa</h2>
+      <p class="muted">Ingresa el RUT. El acceso se valida en el Directorio Central existente.</p>
+      <label>RUT empresa</label>
+      <input id="rut" autocomplete="organization" placeholder="76.123.456-7">
+      <div id="keyWrap" class="hidden">
+        <label>Clave de instalación</label>
+        <input id="installKey" type="password" autocomplete="off" placeholder="SGF-XXXX-XXXX-...">
+      </div>
+      <button id="btnResolve" class="primary">Validar empresa</button>
+      <div id="companyResult" class="status-box hidden"></div>
+    </div>
+
+    <div id="stepSetup" class="hidden">
+      <div class="back" data-back="company">← Cambiar empresa</div>
+      <h2>Primer Administrador</h2>
+      <p class="muted">Esta empresa todavía no tiene usuarios en flota-mantenciones.</p>
+      <label>Nombre</label><input id="setupName" placeholder="Administrador">
+      <label>Correo</label><input id="setupEmail" type="email" placeholder="admin@empresa.cl">
+      <label>Contraseña</label><input id="setupPassword" type="password" placeholder="Mínimo 8 caracteres">
+      <button id="btnSetup" class="primary">Crear Administrador</button>
+    </div>
+
+    <div id="stepLogin" class="hidden">
+      <h2>Iniciar sesión</h2>
+      <div id="loginCompany" class="company-chip"></div>
+      <label>Correo</label><input id="loginEmail" type="email" autocomplete="username">
+      <label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password">
+      <button id="btnLogin" class="primary">Ingresar</button>
+      <div class="connection-actions">
+        <button id="btnChangeCompany" class="link-btn" type="button">Cambiar empresa</button>
+        <button id="btnClearConnection" class="link-btn danger-link" type="button">Limpiar conexión</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="appView" class="app-shell hidden">
+  <aside id="sidebar" class="sidebar" aria-label="Menú principal">
+    <div class="side-brand">
+      <div class="brand-mark small"><img src="efleet-icon.png" alt="E-fleet"></div>
+      <div><strong>E-Fleet</strong><small>Mantenimiento</small></div>
+      <button id="sidebarClose" class="sidebar-close" type="button" aria-label="Cerrar menú">×</button>
+    </div>
+    <nav id="nav">
+      <button data-view="dashboard" class="active">▦ Dashboard</button>
+      <button data-view="empresa">🏢 Empresa</button>
+      <button data-view="checkin" class="nav-protagonist">✓ Checklist técnico</button>
+      <button data-view="checkinhistorial">🕘 Historial de Checklist</button>
+      <button data-view="checkinaprobaciones">✅ Aprobar Checklist</button>
+      <button data-view="perfiles">◉ Perfiles</button>
+      <button data-view="vehiculos">🚙 Vehículos</button>
+      <button data-view="conductores">👤 Conductores</button>
+      <button data-view="asignaciones">🔑 Asignaciones</button>
+      <button data-view="documentos">📄 Documentos</button>
+      <button data-view="fallas">⚠ Fallas</button>
+      <button data-view="mantenciones">🔧 Mantenciones</button>
+      <button data-view="ordenes">📋 Órdenes de servicio</button>
+      <button data-view="talleres">🏭 Talleres</button>
+      <button data-view="historial">↺ Historial mantenciones</button>
+      <button data-view="predicciones">✦ Análisis predictivo</button>
+      <button data-view="notificaciones">🔔 Notificaciones y alertas</button>
+      <button data-view="combustible">⛽ Combustible</button>
+      <button data-view="presupuesto" class="nav-management">💰 Presupuesto Operacional</button>
+      <button data-view="reportes">📊 Reportes PDF / XLSX</button>
+      <button data-view="manual" class="nav-help">❓ Manual de Uso / Ayuda</button>
+      <button class="nav-management" data-view="auditoria">🛡 Auditoría</button>
+      <button id="navUsers" class="nav-management" data-view="usuarios">👥 Usuarios y permisos</button>
+    </nav>
+    <div class="side-bottom">
+      <div id="sideUser"></div>
+      <button id="btnLogout" class="ghost">Cerrar sesión</button>
+    </div>
+  </aside>
+  <button id="sidebarBackdrop" class="sidebar-backdrop" type="button" aria-label="Cerrar menú"></button>
+
+  <main>
+    <header>
+      <div class="header-main">
+        <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="Abrir menú principal" aria-controls="sidebar" aria-expanded="true">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="header-copy">
+          <div class="header-copy-line"><h2 id="pageTitle">Dashboard</h2></div>
+</div>
+        <div class="company-nav-cluster"><button id="pageBackButton" class="page-back-button" type="button" aria-label="Volver atrás">←</button><div id="companyIdentity" class="company-identity">
+          <img id="companyLogoHeader" class="company-logo-header hidden" alt="Logo empresa">
+          <div><small>EMPRESA ACTIVA</small><strong id="companyNameHeader">Empresa</strong></div>
+        </div></div>
+      </div>
+      <div class="header-actions">
+        <button id="btnNotifications" class="notification-bell" type="button" aria-label="Centro de notificaciones">
+          <span class="bell-icon">🔔</span>
+          <span id="notificationCount" class="notification-count hidden">0</span>
+        </button>
+        <button id="btnExportPdfCurrent" class="ghost module-export-button pdf-icon-button" type="button" title="Exportar PDF" aria-label="Exportar PDF">📄</button>
+        <button id="btnExportXlsxCurrent" class="ghost module-export-button excel-icon-button" type="button" title="Exportar Excel" aria-label="Exportar Excel"><span class="excel-icon" aria-hidden="true">X</span></button>
+        <button id="btnRefresh" class="ghost">↻ Actualizar</button>
+        <div class="profile-wrap">
+          <button id="profileButton" class="profile-button" type="button" aria-label="Perfil">
+            <img id="profileImage" class="profile-image hidden" alt="Foto de perfil">
+            <span id="profileInitials" class="profile-initials">U</span>
+          </button>
+          <div id="profileMenu" class="profile-menu hidden">
+            <div class="profile-menu-head">
+              <strong id="profileMenuName">Usuario</strong>
+              <small id="profileMenuRole"></small>
+            </div>
+            <button id="btnChangePhoto" type="button">📷 Cambiar foto</button>
+            <button id="btnProfileLogout" type="button">↪ Cerrar sesión</button>
+          </div>
+          <input id="profileFile" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+        </div>
+      </div>
+    </header>
+
+    <section id="view-dashboard" class="view active">
+      <div id="fleetRings" class="ring-kpi-grid"></div>
+      <div id="kpis" class="kpi-grid"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Salud de la flota</h3></div>
+        <div id="healthRows"></div>
+      </div>
+    </section>
+
+    <section id="view-empresa" class="view">
+      <div class="module-hero company-module-hero">
+        <div><span class="hero-icon">🏢</span><div><span class="module-eyebrow">EMPRESA ACTIVA</span><h3>Datos de la empresa</h3><p>Nombre, logo y datos corporativos usados por Web, Android, PDF y reportes.</p></div></div>
+        <span id="companyStateBadge" class="badge ok">ACTIVA</span>
+      </div>
+      <div class="company-layout">
+        <section class="panel company-logo-panel">
+          <div class="company-logo-preview"><img id="companyLogoPreview" class="hidden" alt="Logo empresa"><span id="companyLogoPlaceholder">🏢</span></div>
+          <h3 id="companyDisplayName">Empresa</h3><p id="companyDisplayRut" class="muted"></p>
+          <input id="companyLogoFile" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+          <button id="btnCompanyLogo" class="ghost" type="button">📷 Cargar / cambiar logo</button>
+        </section>
+        <section class="panel company-form-panel">
+          <div class="company-form-grid">
+            <div><label>Razón social</label><input id="companyLegalName"></div>
+            <div><label>Nombre de fantasía</label><input id="companyTradeName"></div>
+            <div class="span-2"><label>Dirección</label><input id="companyAddress"></div>
+            <div><label>Teléfono</label><input id="companyPhone"></div>
+            <div><label>Correo</label><input id="companyEmail" type="email"></div>
+            <div><label>Alerta velocidad (km/h)</label><input id="companySpeedAlert" type="number" min="0"></div>
+            <div><label>Exceso velocidad (km/h)</label><input id="companySpeedExcess" type="number" min="0"></div>
+            <div><label>Alerta mantención preventiva (km)</label><input id="companyMaintenanceWarn" type="number" min="0"></div>
+            <div><label>Alerta mantención urgente (km)</label><input id="companyMaintenanceUrgent" type="number" min="0"></div>
+          </div>
+          <div class="company-actions"><button id="btnSaveCompany" class="primary" type="button">Guardar datos de empresa</button></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="view-sin-acceso" class="view">
+      <div class="access-empty-state"><span>🔒</span><h3>Perfil sin módulos habilitados</h3><p>La matriz personalizada de esta cuenta está vacía. Un Administrador puede habilitar opciones desde Usuarios y permisos.</p></div>
+    </section>
+
+    <section id="view-perfiles" class="view">
+      <div class="module-hero">
+        <div><span class="hero-icon">◉</span><div><h3>Perfiles de acceso</h3><p>Operador y Supervisor son perfiles distintos; cada uno conserva su propia matriz.</p></div></div>
+        <button id="btnProfilePhoto" class="primary" type="button">📷 Actualizar foto</button>
+      </div>
+      <div id="profileOverview" class="profile-overview"></div>
+      <div id="profileOperational" class="life-grid"></div>
+      <div class="section-heading"><div><span>CONTROL DE ACCESO</span><h3>Perfiles y permisos base</h3><p>El Administrador configura la matriz del perfil; los permisos personalizados del usuario continúan siendo autoritativos.</p></div></div>
+      <div class="advanced-filter-bar compact-filter-bar"><label class="filter-field filter-search"><span>Buscar</span><input id="profileSearch" type="search" placeholder="Perfil, rol o descripción"></label><label class="filter-field"><span>Categoría</span><select id="profileRoleFilter"><option value="">Todas</option><option value="ROL-ADMIN">Administradores</option><option value="ROL-GERENCIA">Gerencia</option><option value="ROL-OPERADOR">Operadores</option><option value="ROL-SUPERVISOR">Supervisores</option><option value="ROL-SUPERVISOR-GEO">Supervisores geográficos</option><option value="ROL-CONDUCTOR">Conductores</option></select></label><div class="advanced-filter-actions"><button id="profileFilterClear" class="ghost" type="button">Limpiar</button></div></div>
+      <div id="roleProfileCards" class="role-profile-grid"></div>
+    </section>
+
+    <section id="view-vehiculos" class="view">
+      <div class="toolbar">
+        <button class="primary" data-open-form="vehiculo">+ Vehículo</button>
+      </div>
+      <div class="advanced-filter-bar" data-filter-module="vehiculos">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Patente, marca, modelo, VIN o combustible"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="vehiculosRows" class="cards"></div>
+    </section>
+
+    <section id="view-conductores" class="view">
+      <div class="module-hero">
+        <div><span class="hero-icon">👤</span><div><span class="module-eyebrow">FICHA + ANTECEDENTES</span><h3>Conductores</h3></div></div>
+        <button class="primary" data-open-form="conductor">+ Conductor</button>
+      </div>
+      <div class="user-module-features"><span>📄 Licencia de conducir</span><span>🪪 Cédula de identidad</span><span>📋 Hoja de vida del conductor</span><span>⚠ Alertas de vencimiento</span></div>
+      <div class="advanced-filter-bar" data-filter-module="conductores">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Nombre, RUT, correo, teléfono o licencia"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="conductoresRows" class="cards"></div>
+    </section>
+
+
+    <section id="view-asignaciones" class="view">
+      <div class="module-hero">
+        <div><span class="hero-icon">🔑</span><div><h3>Asignación de vehículos</h3><p>Asigna vehículos a conductores y controla aceptación.</p></div></div>
+        <button id="btnNewAssignment" class="primary">+ Asignar vehículo</button>
+      </div>
+      <div class="advanced-filter-bar" data-filter-module="asignaciones">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Vehículo, conductor u observación"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="assignmentRows" class="cards modern-grid"></div>
+    </section>
+
+    <section id="view-documentos" class="view">
+      <div class="module-hero">
+        <div><span class="hero-icon">📄</span><div><h3>Documentos</h3><p>Documentación asociada a vehículos y conductores.</p></div></div>
+        <button id="btnNewDocument" class="primary">+ Nuevo documento</button>
+      </div>
+      <div class="document-kpis">
+        <div class="mini-kpi"><small>Total</small><strong id="docKpiTotal">0</strong></div>
+        <div class="mini-kpi ok"><small>Vigentes</small><strong id="docKpiOk">0</strong></div>
+        <div class="mini-kpi warn"><small>30 días</small><strong id="docKpiWarn">0</strong></div>
+        <div class="mini-kpi danger"><small>Prioritarios ≤15 días</small><strong id="docKpiPriority">0</strong></div>
+        <div class="mini-kpi danger"><small>Vencidos</small><strong id="docKpiExpired">0</strong></div>
+      </div>
+      <div class="advanced-filter-bar" data-filter-module="documentos">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Tipo, número, patente o conductor"></label>
+        <label class="filter-field"><span>Entidad</span><select id="docFilterEntity" data-filter-extra="entity"><option value="">Vehículos y conductores</option><option value="VEHICULO">Vehículos</option><option value="CONDUCTOR">Conductores</option></select></label>
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="documentRows" class="document-grid"></div>
+      <div class="panel"><div class="panel-head"><div><h3>Línea de tiempo documental</h3><p class="muted">Carga, reemplazo, edición, vencimiento y eliminación quedan trazados.</p></div></div><div id="documentTimeline" class="maintenance-timeline"></div></div>
+    </section>
+
+    <section id="view-checkin" class="view">
+      <div class="checkin-hero">
+        <div>
+          <span class="checkin-eyebrow">MÓDULO PROTAGONISTA · CONTROL TÉCNICO</span>
+          <h3>Centro de Checklist vehicular</h3>
+          <p>Inspecciona, decide, informa fallas y programa mantenciones sin abandonar este módulo.</p>
+        </div>
+        <span class="checkin-count">18<br><small>PUNTOS</small></span>
+      </div>
+      <div class="checkin-qr-gateway" aria-label="Acceso rápido QR de Checklist">
+        <div class="checkin-qr-gateway-main">
+          <div class="checkin-qr-gateway-icon" aria-hidden="true">▦</div>
+          <div>
+            <span class="checkin-qr-gateway-kicker">ACCESO QR · CHECKLIST</span>
+            <strong>Escáner QR visible y directo</strong>
+            <small>Valida el QR temporal del vehículo antes de iniciar la inspección. No necesitas seleccionar una unidad para abrir el escáner.</small>
+          </div>
+        </div>
+        <div class="checkin-qr-gateway-actions">
+          <button id="btnScanCheckinQr" class="qr-scan-main" type="button">📷 ESCANEAR / VALIDAR QR</button>
+          <button id="btnGenerateCheckinQr" class="qr-generate-main" type="button">▦ GENERAR QR · 15 MIN</button>
+        </div>
+      </div>
+      <div class="checkin-workflow">
+        <div><b>1</b><span><strong>Identificar</strong><small>Tarjetas y QR</small></span></div>
+        <div><b>2</b><span><strong>Inspeccionar</strong><small>18 controles</small></span></div>
+        <div><b>3</b><span><strong>Decidir</strong><small>Apto o no apto</small></span></div>
+        <div><b>4</b><span><strong>Actuar</strong><small>Falla o mantención</small></span></div>
+      </div>
+      <div class="panel checkin-schedule-panel">
+        <div class="panel-head"><div><h3>Próximos Checklist programados</h3><p>La programación también nace desde este módulo protagonista.</p></div><button id="btnProgramCheckinSecondary" class="primary" type="button">+ Programar</button></div>
+        <div id="checkinScheduleRows" class="schedule-grid"></div>
+      </div>
+      <div class="panel checkin-create-panel">
+        <div class="panel-head">
+          <div><h3>Nueva inspección</h3><p>Selecciona la unidad antes de generar el acceso QR.</p></div>
+          <div class="checkin-head-actions">
+            <button id="btnProgramCheckin" class="ghost" type="button">🗓 Programar Checklist</button>
+            <button id="btnGoCheckinHistory" class="ghost" type="button">🕘 Historial</button>
+            <button id="btnGoCheckinApprovals" class="ghost" type="button">✅ Aprobar</button>
+            <button id="btnCheckinVoice" class="voice-action" type="button">🎙 Informar por voz</button>
+            <button id="btnMarkAllConforme" class="ghost" type="button">✓ Marcar todo conforme</button>
+          </div>
+        </div>
+        <div class="checkin-selection-board">
+          <section class="checkin-choice-section checkin-choice-wide">
+            <div class="checkin-section-title"><span>1</span><div><strong>Selecciona el vehículo</strong><small>Presiona una tarjeta para dejar la unidad activa.</small></div></div>
+            <label class="checkin-quick-search"><span>Buscar vehículo</span><input id="ciVehicleSearch" type="search" placeholder="Patente, marca, modelo o VIN" autocomplete="off"></label>
+            <input id="ciVehicle" type="hidden">
+            <div id="ciVehicleCards" class="checkin-choice-grid vehicle-choice-grid"></div>
+          </section>
+          <section class="checkin-choice-section">
+            <div class="checkin-section-title"><span>2</span><div><strong>Selecciona el conductor</strong><small>Las opciones están dentro de tarjetas.</small></div></div>
+            <label class="checkin-quick-search"><span>Buscar conductor</span><input id="ciDriverSearch" type="search" placeholder="Nombre, RUT, correo o licencia" autocomplete="off"></label>
+            <input id="ciDriver" type="hidden">
+            <div id="ciDriverCards" class="checkin-choice-grid driver-choice-grid"></div>
+          </section>
+          <section class="checkin-choice-section mileage-choice-card">
+            <div class="checkin-section-title"><span>3</span><div><strong>Kilometraje actual</strong><small>Se incorpora al Checklist y sus acciones.</small></div></div>
+            <div class="mileage-input"><input id="ciKm" type="number" min="0" inputmode="numeric" placeholder="0"><span>KM</span></div>
+            <div class="km-confirm-line"><span>El kilometraje es el único dato mínimo operativo.</span><strong id="ciKmStatus">Pendiente de confirmar</strong></div>
+          </section>
+        </div>
+        <div id="checkinQrGateHint" class="checkin-qr-gate"><strong>QR requerido</strong><span>Valida el QR del vehículo asignado para habilitar los 18 puntos de chequeo.</span></div>
+        <div id="checkinValidatedArea" class="hidden">
+        <div class="checkin-inspection-heading"><span>4</span><div><strong>Inspección de 18 puntos</strong><small>Cada tarjeta contiene sus tres opciones: Conforme, Observación o Falla.</small></div></div>
+        <div id="checklist" class="checklist"></div>
+        <div class="checkin-close-grid">
+          <div>
+            <label>Observación general</label>
+            <textarea id="ciObs" rows="4" placeholder="Ruidos, daños, testigos o condiciones relevantes"></textarea>
+          </div>
+          <div id="ciResultBox" class="checkin-result result-ok">
+            <small>RESULTADO TÉCNICO EN VIVO</small>
+            <strong id="ciResult">APTO</strong>
+            <span id="ciResultDetail">18 conformes · 0 observaciones · 0 fallas</span>
+          </div>
+        </div>
+        <div class="checkin-evidence-box">
+          <div class="guided-evidence-title"><div><strong>📷 Evidencia fotográfica guiada</strong><small>5 vistas del perímetro + odómetro. Esperada para trazabilidad, pero nunca impide cerrar el Checklist.</small></div></div>
+          <div class="checkin-photo-guide">
+            <label class="guided-photo"><span>FOTO 1</span><strong>Frente</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="FRENTE" data-guided-label="Frente"></label>
+            <label class="guided-photo"><span>FOTO 2</span><strong>Parte trasera</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="TRASERA" data-guided-label="Parte trasera"></label>
+            <label class="guided-photo"><span>FOTO 3</span><strong>Lateral izquierdo</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="LATERAL_IZQ" data-guided-label="Lateral izquierdo"></label>
+            <label class="guided-photo"><span>FOTO 4</span><strong>Lateral derecho</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="LATERAL_DER" data-guided-label="Lateral derecho"></label>
+            <label class="guided-photo"><span>FOTO 5</span><strong>Vista general 3/4</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="GENERAL_3_4" data-guided-label="Vista general 3/4"></label>
+            <label class="guided-photo"><span>ODÓMETRO</span><strong>Kilometraje</strong><input type="file" accept="image/*" capture="environment" data-guided-evidence="ODOMETRO" data-guided-label="Odómetro"></label>
+          </div>
+          <label>Archivos adicionales</label><input id="ciEvidenceFiles" type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf">
+          <span id="ciEvidenceHint">Evidencia guiada 0/6 · no bloqueante</span>
+        </div>
+        <div id="checkinContinuityNotice" class="continuity-notice"><b>CONTINUIDAD OPERACIONAL</b><span>Las evidencias, IA, documentos vencidos o fallas informan; nunca bloquean el cierre. Sin internet se guarda localmente y sincroniza después.</span></div>
+        <button id="btnSaveCheckin" class="primary checkin-save">Confirmar KM y guardar Checklist</button>
+        </div>
+        <section class="checkin-action-hub">
+          <div class="checkin-action-head">
+            <div><span>ACCIONES DEL CHECKLIST</span><h3>Actúa sobre el resultado</h3><p id="checkinActionContext">Guarda la inspección para vincular una falla o mantención.</p></div>
+            <button id="btnNewCheckin" class="ghost" type="button">↻ Nueva inspección</button>
+          </div>
+          <div class="checkin-action-grid">
+            <article id="checkinFailureAction" class="checkin-action-card failure-action is-locked">
+              <div class="checkin-action-icon">⚠</div>
+              <div><small>DESDE EL CHECKLIST</small><h4>Informe de fallas</h4><p>Registra el hallazgo con vehículo, conductor, kilometraje y Checklist vinculados.</p></div>
+              <div id="checkinFailureOptions" class="checkin-action-options"><button type="button" data-current-checkin-failure="ADICIONAL" disabled>+ Informar falla adicional</button></div>
+            </article>
+            <article id="checkinMaintenanceAction" class="checkin-action-card maintenance-action is-locked">
+              <div class="checkin-action-icon">🔧</div>
+              <div><small>PROGRAMACIÓN DIRECTA</small><h4>Programar mantención</h4><p>Escoge el tipo dentro de la tarjeta y continúa con la fecha y el trabajo.</p></div>
+              <div class="checkin-action-options">
+                <button type="button" data-current-checkin-maintenance="PREVENTIVA" disabled>Preventiva</button>
+                <button type="button" data-current-checkin-maintenance="CORRECTIVA" disabled>Correctiva</button>
+                <button type="button" data-current-checkin-maintenance="PREDICTIVA" disabled>Predictiva</button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Historial reciente</h3></div>
+        <div id="checkinRows"></div>
+      </div>
+    </section>
+
+    <section id="view-checkinhistorial" class="view">
+      <div class="module-hero"><div><span class="hero-icon">🕘</span><div><span class="module-eyebrow">TRAZABILIDAD</span><h3>Historial de Checklist</h3><p>Inspecciones, resultado técnico, aprobación, kilometraje y evidencias por vehículo.</p></div></div><div class="hero-actions"><button id="btnCheckinHistoryPdf" class="ghost pdf-icon-button" title="Exportar PDF" aria-label="Exportar PDF">📄</button><button id="btnCheckinHistoryXlsx" class="ghost excel-icon-button" type="button" title="Exportar Excel" aria-label="Exportar Excel"><span class="excel-icon" aria-hidden="true">X</span></button></div></div>
+      <div class="advanced-filter-bar" data-filter-module="checkinhistorial">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Patente, conductor u observación"></label>
+        <label class="filter-field"><span>Vehículo</span><select id="checkinHistoryVehicle" data-filter-extra="vehicle"><option value="">Todos los vehículos</option></select></label>
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="checkinHistoryKpis" class="ring-kpi-grid compact"></div>
+      <div id="checkinHistoryRows" class="checkin-history-grid"></div>
+    </section>
+
+    <section id="view-checkinaprobaciones" class="view">
+      <div class="module-hero"><div><span class="hero-icon">✅</span><div><span class="module-eyebrow">ADMINISTRADOR / GERENCIA</span><h3>Aprobar Checklist</h3><p>Aprobación directa disponible sin pasos intermedios, conservando el resultado técnico y la auditoría.</p></div></div></div>
+      <div id="checkinApprovalKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="checkinaprobaciones">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Patente, conductor, resultado u observación"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="checkinApprovalRows" class="checkin-history-grid"></div>
+    </section>
+
+    <section id="view-fallas" class="view">
+      <div class="module-hero"><div><span class="hero-icon">⚠</span><div><span class="module-eyebrow">CONTROL DE FALLAS</span><h3>Fallas</h3><p>Haz clic en el comentario o la tarjeta para desplegar el detalle, evidencias, trazabilidad y acciones relacionadas.</p></div></div><div class="hero-actions"><button id="btnFailureVoice" class="voice-action" type="button">🎙 Reportar por voz</button><button class="primary" data-open-form="falla">+ Informar falla</button></div></div>
+      <div class="advanced-filter-bar" data-filter-module="fallas">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Falla, vehículo, conductor, comentario u origen"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="fallasRows" class="cards"></div>
+    </section>
+
+    <section id="view-mantenciones" class="view">
+      <div class="module-hero"><div><span class="hero-icon">🔧</span><div><h3>Mantenciones por vehículo</h3><p>Planificación, ejecución y costo vinculados a la hoja de vida de cada unidad.</p></div></div><button class="primary" data-open-form="mantencion">+ Mantención</button></div>
+      <div id="maintenanceKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="mantenciones">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Trabajo, vehículo, taller u observación"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="mantencionesRows" class="cards"></div>
+    </section>
+
+    <section id="view-ordenes" class="view">
+      <div class="module-hero service-orders-hero"><div><span class="hero-icon">📋</span><div><span class="module-eyebrow">SERVICIO TÉCNICO</span><h3>Órdenes de servicio</h3><p>Formato técnico moderno con vehículo, taller, diagnóstico, trabajos, costos y trazabilidad.</p></div></div><div class="hero-actions"><button class="primary" data-open-form="orden">+ Orden de servicio</button></div></div>
+      <div id="orderKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="ordenes">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Orden, vehículo, taller, diagnóstico o trabajo"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="orderRows" class="service-order-grid"></div>
+    </section>
+
+    <section id="view-talleres" class="view">
+      <div class="module-hero"><div><span class="hero-icon">🏭</span><div><span class="module-eyebrow">RED DE SERVICIO</span><h3>Talleres</h3><p>Escribe la dirección en texto; E-Fleet obtiene automáticamente la ubicación y las coordenadas, además de teléfono y calidad histórica.</p></div></div><div class="hero-actions"><button class="primary" data-open-form="taller">+ Taller</button></div></div>
+      <div id="workshopKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="talleres">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Nombre, especialidad, dirección, comuna o contacto"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="talleresRows" class="workshop-grid"></div>
+    </section>
+
+    <section id="view-historial" class="view">
+      <div class="module-hero"><div><span class="hero-icon">↺</span><div><h3>Historial de mantenciones</h3><p>Trazabilidad completa por vehículo, fecha, tipo, estado, kilometraje y costo.</p></div></div></div>
+      <div id="historyKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="historial">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Trabajo, patente u observación"></label>
+        <label class="filter-field"><span>Vehículo</span><select id="historyVehicle" data-filter-extra="vehicle"><option value="">Todos los vehículos</option></select></label>
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="historyRows" class="maintenance-timeline"></div>
+    </section>
+
+    <section id="view-predicciones" class="view">
+      <div class="predictive-hero"><div><span class="predictive-eyebrow">NEXO · MOTOR AUTOMÁTICO CONTINUO</span><h3>Análisis Predictivo</h3></div><button id="btnRunPrediction" class="primary" type="button">✦ Recalcular ahora</button></div>
+      <div id="predictionOverview" class="prediction-overview"><div class="prediction-placeholder">Ejecuta el análisis para obtener la condición actual de la flota.</div></div>
+      <div class="panel"><div class="panel-head"><div><h3>Análisis registrados</h3><p class="muted">Resultados históricos disponibles para esta cuenta.</p></div></div>      <div class="advanced-filter-bar" data-filter-module="predicciones">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Vehículo, tipo, riesgo, explicación o recomendación"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div><div id="predictionRows" class="cards"></div></div>
+    </section>
+
+    <section id="view-notificaciones" class="view">
+      <div class="module-hero"><div><span class="hero-icon">🔔</span><div><h3>Centro de Notificaciones</h3><p>La campanita muestra solo pendientes. Aquí queda todo el historial asociado al perfil y sus recursos, respetando rol y empresa.</p></div></div><div class="hero-actions"><button id="notificationPageInlineBack" class="ghost notification-back-inline hidden" type="button">← Volver atrás</button><button id="btnNotificationVoice" class="voice-action" type="button">🎙 Enviar por voz</button><button id="pageNotificationRefresh" class="ghost" type="button">↻ Actualizar</button><button id="pageNotificationMarkAll" class="primary" type="button">✓ Marcar leídas</button></div></div>
+      <div id="notificationKpis" class="ring-kpi-grid compact"></div>
+      <div id="notificationPageDetail" class="notification-focus-panel hidden"></div>
+      <div class="advanced-filter-bar" data-filter-module="notificaciones">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Título, mensaje, vehículo, usuario o categoría"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="notificationPageSelection" class="notification-page-selection hidden"></div><div id="notificationPageRows" class="notification-page-grid"></div>
+    </section>
+
+    <section id="view-combustible" class="view">
+      <div class="module-hero fuel-hero"><div><span class="hero-icon">⛽</span><div><span class="module-eyebrow">CONTROL TÉCNICO–ECONÓMICO</span><h3>Combustible Pro</h3><p>Registro con odómetro, GPS, dirección, estación, evidencia, rendimiento, costo/km, anomalías y reportes.</p></div></div><div class="hero-actions"><button id="btnFuelNearby" class="ghost" type="button">📍 Estaciones cercanas</button><button id="btnFuelGps" class="ghost" type="button">⌖ Usar mi ubicación</button><button class="primary" data-open-form="combustible">+ Informar carga</button></div></div>
+      <div id="fuelKpis" class="ring-kpi-grid compact"></div>
+      <div id="fuelAlert" class="fuel-alert hidden"></div>
+      <div class="advanced-filter-bar" data-filter-module="combustible">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Vehículo, conductor, estación, dirección o carga"></label>
+        
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div class="panel fuel-map-panel"><div class="panel-head"><div><h3>Estaciones y análisis</h3><p>Las estaciones cercanas se obtienen por ubicación. Los precios en vivo se muestran solo si existe una fuente configurada.</p></div></div><div id="fuelNearbyRows" class="fuel-nearby-grid"><div class="notification-empty">Usa “Estaciones cercanas” para buscar alrededor de tu ubicación.</div></div></div>
+      <div id="combustibleRows" class="cards fuel-grid"></div>
+    </section>
+
+
+    <section id="view-presupuesto" class="view">
+      <div class="module-hero budget-hero">
+        <div><span class="hero-icon">💰</span><div><span class="module-eyebrow">CONTROL FINANCIERO DE FLOTA · ADMINISTRACIÓN / GERENCIA</span><h3>Presupuesto Operacional</h3><p>Presupuesto → gasto real → compromiso → desviación → vehículo/conductor → acción correctiva.</p></div></div>
+        <div class="hero-actions"><button id="btnBudgetPdf" class="ghost pdf-icon-button" type="button" title="Reporte ejecutivo PDF" aria-label="Reporte ejecutivo PDF">📄</button><button id="btnBudgetXlsx" class="ghost excel-icon-button" type="button" title="Análisis Excel" aria-label="Análisis Excel"><span class="excel-icon" aria-hidden="true">X</span></button><button id="btnBudgetEvaluate" class="ghost" type="button">⚡ Evaluar y generar tareas</button><button id="btnBudgetHistory" class="ghost" type="button">↺ Historial / restaurar</button><button id="btnBudgetAnnul" class="ghost hidden" type="button">Anular</button><button id="btnBudgetConfigure" class="primary" type="button">⚙ Configurar</button></div>
+      </div>
+      <div class="budget-period-bar panel"><div><label>Año</label><select id="budgetYear"></select></div><div><label>Mes</label><select id="budgetMonth"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div><button id="btnBudgetRefresh" class="ghost" type="button">↻ Actualizar</button><span id="budgetStatusPill" class="budget-status normal">SIN CONFIGURAR</span></div>
+      <div id="budgetEmpty" class="budget-empty panel hidden"><div class="budget-empty-icon">◎</div><h3>Configura el presupuesto para comenzar</h3><p>Define monto anual, distribución mensual, fondo de emergencia y umbrales. E-Fleet cruzará automáticamente los gastos de combustible, mantenciones, órdenes de servicio y movimientos manuales.</p><button id="btnBudgetConfigureEmpty" class="primary" type="button">Crear presupuesto operacional</button></div>
+      <div id="budgetContent" class="hidden">
+        <div id="budgetKpis" class="budget-kpi-grid"></div>
+        <div class="budget-intelligence-grid">
+          <section class="panel budget-projection-panel"><div class="panel-head"><div><span class="module-eyebrow">PROYECCIÓN</span><h3>Riesgo de cierre mensual</h3></div><strong id="budgetProjectionValue" class="budget-big-value">0%</strong></div><div class="budget-track"><span id="budgetProjectionBar"></span><i class="budget-line line70"></i><i class="budget-line line85"></i><i class="budget-line line100"></i></div><div class="budget-track-labels"><span>0%</span><span>70 Vigilancia</span><span>85 Alto</span><span>100 Exceso</span></div><div id="budgetAnalysis" class="budget-analysis"></div></section>
+          <section class="panel budget-fund-panel"><div class="panel-head"><div><span class="module-eyebrow">RESERVA DE SEGURIDAD</span><h3>Fondo de emergencia</h3></div><button id="btnBudgetEmergency" class="ghost" type="button">＋ Movimiento</button></div><div id="budgetFundGauge" class="budget-fund-gauge"></div></section>
+        </div>
+        <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">CONTROL POR RUBRO</span><h3>Presupuesto por categoría</h3></div><small>Ejecutado + comprometido</small></div><div id="budgetCategories" class="budget-category-list"></div></section>
+        <div class="budget-ranking-grid">
+          <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">TOP 10</span><h3>Vehículos que consumen presupuesto</h3></div><button id="btnBudgetVehicleLimit" class="ghost" type="button">＋ Tope vehículo</button></div><div id="budgetVehicles" class="budget-ranking-list"></div></section>
+          <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">TOP 10</span><h3>Gasto asociado a conductores</h3></div><small>No atribuye causalidad automática</small></div><div id="budgetDrivers" class="budget-ranking-list"></div></section>
+        </div>
+        <div class="budget-ranking-grid">
+          <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">ACCIÓN</span><h3>Alertas presupuestarias</h3></div></div><div id="budgetAlerts" class="budget-alert-list"></div></section>
+          <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">ACCIÓN</span><h3>Tareas de Control Presupuestario</h3></div></div><div id="budgetTasks" class="budget-task-list"></div></section>
+        </div>
+        <section class="panel"><div class="panel-head"><div><span class="module-eyebrow">TRAZABILIDAD</span><h3>Auditoría Presupuestaria</h3></div><small>Crear · editar · anular · restaurar</small></div><div id="budgetAudit" class="budget-audit-list"></div></section>
+      </div>
+    </section>
+
+    <section id="view-reportes" class="view">
+      <div class="module-hero"><div><span class="hero-icon">📊</span><div><span class="module-eyebrow">INFORMES Y ANÁLISIS</span><h3>Reportes PDF / XLSX</h3><p>Exporta información de Checklist, mantenciones, fallas, talleres, vehículos, combustible y usuarios.</p></div></div><div class="hero-actions"><button id="btnReportPdf" class="ghost pdf-icon-button" title="Descargar PDF" aria-label="Descargar PDF">📄</button><button id="btnReportXlsx" class="ghost excel-icon-button" type="button" title="Descargar Excel" aria-label="Descargar Excel"><span class="excel-icon" aria-hidden="true">X</span></button></div></div>
+      <div class="panel report-selector"><label>Informe</label><select id="reportType"><option value="CHECKINS">Checklist</option><option value="MANTENCIONES">Mantenciones</option><option value="ORDENES_TRABAJO">Órdenes de servicio</option><option value="FALLAS">Fallas</option><option value="TALLERES">Talleres</option><option value="VEHICULOS">Vehículos</option><option value="COMBUSTIBLE">Combustible</option><option value="DOCUMENTOS">Documentos</option><option value="PREDICCIONES">Análisis predictivo</option><option value="USUARIOS">Usuarios</option><option value="PRESUPUESTO_OPERACIONAL">Presupuesto Operacional</option></select><button id="btnReportRefresh" class="ghost">↻ Actualizar informe</button></div>
+      <div class="advanced-filter-bar" data-filter-module="reportes">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Buscar dentro del informe"></label>
+        <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select data-filter-category><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="reportKpis" class="ring-kpi-grid compact"></div>
+      <div class="panel report-table-wrap"><div id="reportTable" class="report-table"></div></div>
+    </section>
+
+
+    <section id="view-manual" class="view">
+      <div class="module-hero manual-module-hero">
+        <div><span class="hero-icon">❓</span><div><span class="module-eyebrow">AYUDA INTEGRADA · WEB + ANDROID</span><h3>Manual de Uso E-FLEET</h3><p>Consulta procedimientos, roles, QR, Checklist, mantenciones, combustible, presupuesto, reportes y solución de problemas sin salir del sistema.</p></div></div>
+        <div class="hero-actions"><a class="primary manual-pdf-link" href="MANUAL_USO_E_FLEET_WEB_ANDROID.pdf" target="_blank" rel="noopener">📄 Manual PDF</a></div>
+      </div>
+      <div class="manual-module-info"><span>🔎 Buscador integrado</span><span>🌐 Web</span><span>📱 Android</span><span>📚 Índice por módulos</span><span>🔒 Disponible con sesión iniciada</span></div>
+      <div class="manual-frame-wrap"><iframe id="manualFrame" title="Manual de Uso E-FLEET Web y Android" src="manual.html" loading="lazy"></iframe></div>
+    </section>
+
+    <section id="view-auditoria" class="view">
+      <div class="module-hero"><div><span class="hero-icon">🛡</span><div><span class="module-eyebrow">TRAZABILIDAD CORPORATIVA</span><h3>Auditoría</h3><p>Registro de acciones del sistema. Acceso exclusivo para Administración y Gerencia.</p></div></div></div>
+      <div id="auditKpis" class="ring-kpi-grid compact"></div>
+      <div class="advanced-filter-bar" data-filter-module="auditoria">
+        <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Acción, módulo, usuario o entidad"></label>
+        <label class="filter-field"><span>Acción</span><select data-filter-state><option value="">Todas</option></select></label>
+        <label class="filter-field"><span>Módulo</span><select data-filter-category><option value="">Todos</option></select></label>
+        <label class="filter-field"><span>Rol</span><select data-filter-criticality><option value="">Todos</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="auditRows" class="maintenance-timeline"></div>
+    </section>
+
+    <section id="view-usuarios" class="view">
+      <div class="module-hero user-module-hero">
+        <div><span class="hero-icon">👥</span><div><span class="module-eyebrow">ADMINISTRACIÓN DE ACCESO</span><h3>Creación de usuarios</h3><p>Crea cuentas, asigna el perfil correcto, vincula conductores y configura permisos por módulo.</p></div></div>
+        <button id="btnNewUser" class="primary user-create-button" type="button" data-open-form="usuario"><span>＋</span><strong>Crear usuario</strong><small>Nueva cuenta de acceso</small></button>
+      </div>
+      <div class="user-module-features"><span>✓ Operador y Supervisor separados</span><span>✓ Asociación con conductor</span><span>✓ Permisos personalizados</span><span>✓ Aislamiento por empresa</span></div>
+      <div class="advanced-filter-bar" data-filter-module="usuarios">
+        <label class="filter-field filter-search"><span>Buscar</span><input id="userSearch" data-filter-search type="search" placeholder="Nombre, correo, perfil o conductor"></label>
+        <label class="filter-field"><span>Estado</span><select id="userStateFilter" data-filter-state><option value="">Todos</option><option value="ACTIVO">ACTIVO</option><option value="INACTIVO">INACTIVO</option><option value="SUSPENDIDO">SUSPENDIDO</option></select></label>
+        <label class="filter-field"><span>Categoría</span><select id="userRoleFilter" data-filter-category><option value="">Todas</option><option value="ROL-ADMIN">Administradores</option><option value="ROL-GERENCIA">Gerencia</option><option value="ROL-OPERADOR">Operadores</option><option value="ROL-SUPERVISOR">Supervisores</option><option value="ROL-SUPERVISOR-GEO">Supervisores geográficos</option><option value="ROL-CONDUCTOR">Conductores</option></select></label>
+        <label class="filter-field"><span>Criticidad</span><select data-filter-criticality><option value="">Todas</option></select></label>
+        <label class="filter-field filter-date"><span>Desde</span><input data-filter-from type="date"></label>
+        <label class="filter-field filter-date"><span>Hasta</span><input data-filter-to type="date"></label>
+        <div class="advanced-filter-actions"><button class="primary" data-filter-apply type="button">Aplicar</button><button id="userFilterClear" class="ghost" data-filter-clear type="button">Limpiar</button><button class="ghost" data-filter-refresh type="button">↻ Actualizar</button></div>
+      </div>
+      <div id="userKpis" class="user-kpis"></div>
+      <div id="userRows" class="user-grid"></div>
+    </section>
+  </main>
+</section>
+
+
+
+<div id="assignmentEmergency" class="assignment-emergency hidden">
+  <div class="assignment-emergency-card">
+    <div class="assignment-alert-icon">🚙</div>
+    <h3>Vehículo asignado</h3>
+    <p id="assignmentEmergencyText"></p>
+    <div class="assignment-emergency-actions">
+      <button id="btnAssignmentLater" class="ghost">Ver después</button>
+      <button id="btnAssignmentAccept" class="primary">Aceptar vehículo</button>
+    </div>
+  </div>
+</div>
+
+<div id="permissionModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="permissionTitle">
+  <div class="modal-card permission-modal-card">
+    <div class="modal-head"><div><h3 id="permissionTitle">Permisos del usuario</h3><small id="permissionUserLabel"></small></div><button id="permissionClose" type="button">×</button></div>
+    <div class="permission-mode"><label>Modo de permisos</label><select id="permissionMode"><option value="ROL">Según rol</option><option value="PERSONALIZADO">Personalizado</option></select><p id="permissionHelp">El rol aplica su configuración base.</p></div>
+    <div id="permissionTools" class="permission-tools"><button id="permissionAll" class="ghost" type="button">Habilitar todo</button><button id="permissionNone" class="ghost" type="button">Deshabilitar todo</button></div>
+    <div id="permissionMatrix" class="permission-matrix"></div>
+    <div class="modal-actions"><button id="permissionCancel" class="ghost" type="button">Cancelar</button><button id="permissionSave" class="primary" type="button">Guardar permisos</button></div>
+  </div>
+</div>
+
+
+<div id="budgetConfigModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="budgetConfigTitle">
+  <div class="modal-card budget-config-card"><div class="modal-head"><div><span class="module-eyebrow">ADMINISTRACIÓN / GERENCIA</span><h3 id="budgetConfigTitle">Configurar Presupuesto Operacional</h3></div><button id="budgetConfigClose" type="button" aria-label="Cerrar">×</button></div>
+    <div class="form-grid budget-config-grid"><label>Año<input id="budgetCfgYear" type="number" min="2020" max="2200"></label><label>Presupuesto anual (CLP)<input id="budgetCfgAnnual" type="number" min="0" step="1000"></label><label>Fondo de emergencia<input id="budgetCfgFund" type="number" min="0" step="1000"></label><label>Fondo<input id="budgetCfgFundMode" type="hidden"><select id="budgetCfgFundModeSelect"><option value="INCLUIDO">Incluido en presupuesto anual</option><option value="ADICIONAL">Adicional al presupuesto anual</option></select></label><label>Distribución mensual<select id="budgetCfgDistribution"><option value="EQUITATIVA">Equitativa</option><option value="PERSONALIZADA">Personalizada</option></select></label><label>Política nuevos compromisos<select id="budgetCfgPolicy"><option value="ALERTAR">Alertar</option><option value="REQUIERE_AUTORIZACION">Requiere autorización de Gerencia</option></select></label><label>Vigilancia %<input id="budgetCfgWarn" type="number" min="1" max="100" value="70"></label><label>Alto %<input id="budgetCfgHigh" type="number" min="1" max="150" value="85"></label><label>Exceso %<input id="budgetCfgExcess" type="number" min="1" max="300" value="100"></label><label>Proyección crítica %<input id="budgetCfgProjection" type="number" min="1" max="300" value="110"></label></div>
+    <div id="budgetMonthEditor" class="budget-month-editor hidden"></div><label class="budget-reason">Motivo del cambio<textarea id="budgetCfgReason" rows="3" placeholder="Obligatorio al editar un presupuesto vigente"></textarea></label><div class="budget-history-warning">Los reajustes no eliminan desviaciones anteriores. E-Fleet conserva el presupuesto original y la trazabilidad del cambio.</div>
+    <div class="modal-actions"><button id="budgetConfigCancel" class="ghost" type="button">Cancelar</button><button id="budgetConfigSave" class="primary" type="button">Guardar configuración</button></div>
+  </div>
+</div>
+<div id="budgetActionModal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card budget-action-card"><div class="modal-head"><h3 id="budgetActionTitle">Acción presupuestaria</h3><button id="budgetActionClose" type="button">×</button></div><div id="budgetActionBody"></div><div class="modal-actions"><button id="budgetActionCancel" class="ghost" type="button">Cancelar</button><button id="budgetActionSave" class="primary" type="button">Guardar</button></div></div></div>
+
+<aside id="notificationCenter" class="notification-center hidden" aria-label="Notificaciones pendientes">
+  <div class="notification-head">
+    <div>
+      <h3>Notificaciones pendientes</h3>
+      <small id="notificationSummary">Sin notificaciones pendientes</small>
+    </div>
+    <button id="notificationClose" type="button" aria-label="Cerrar">×</button>
+  </div>
+
+  <div class="notification-toolbar">
+    <button id="notificationRefresh" class="ghost small-btn" type="button">↻ Actualizar</button>
+    <button id="notificationMarkAll" class="ghost small-btn" type="button">✓ Marcar todas</button>
+  </div>
+
+  <div id="notificationRows" class="notification-rows">
+    <div class="notification-empty">Cargando notificaciones…</div>
+  </div>
+</aside>
+<div id="notificationDetailModal" class="modal notification-detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="notificationDetailTitle">
+  <div class="notification-detail-card">
+    <div class="modal-head notification-detail-head"><h3 id="notificationDetailTitle">Detalle de notificación</h3><button id="notificationDetailClose" type="button" aria-label="Cerrar">×</button></div>
+    <div id="notificationDetailBody" class="notification-detail-body"></div>
+    <div class="modal-actions"><button id="notificationDetailDone" class="primary" type="button">Cerrar</button></div>
+  </div>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modalTitle"></h3><button id="modalClose">×</button></div>
+    <div id="modalBody"></div>
+    <div class="modal-actions"><button id="modalCancel" class="ghost">Cancelar</button><button id="modalSave" class="primary">Guardar</button></div>
+  </div>
+</div>
+
+<div id="qrAssignModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrAssignTitle">
+  <div class="modal-card qr-assign-card">
+    <div class="modal-head"><div><h3 id="qrAssignTitle">Asignación rápida para QR</h3><small>Busca y selecciona vehículo y conductor antes de generar el QR temporal.</small></div><button id="qrAssignClose" type="button" aria-label="Cerrar">×</button></div>
+    <div class="qr-assign-grid">
+      <label class="qr-assign-field"><span>Buscar vehículo</span><input id="qrAssignVehicleSearch" type="search" placeholder="Patente, marca, modelo o VIN"></label>
+      <label class="qr-assign-field"><span>Vehículo</span><select id="qrAssignVehicle"></select></label>
+      <label class="qr-assign-field"><span>Buscar conductor</span><input id="qrAssignDriverSearch" type="search" placeholder="Nombre, RUT o correo"></label>
+      <label class="qr-assign-field"><span>Conductor</span><select id="qrAssignDriver"></select></label>
+    </div>
+    <div class="qr-assign-summary"><span>🚙 <strong id="qrAssignVehicleLabel">Selecciona vehículo</strong></span><span>👤 <strong id="qrAssignDriverLabel">Selecciona conductor</strong></span></div>
+    <div class="modal-actions"><button id="qrAssignCancel" class="ghost" type="button">Cancelar</button><button id="qrAssignSave" class="primary" type="button">Asignar</button></div>
+  </div>
+</div>
+
+<div id="qrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+  <div class="modal-card qr-modal-card">
+    <div class="modal-head"><h3 id="qrTitle">QR de Checklist</h3><button id="qrClose" type="button" aria-label="Cerrar">×</button></div>
+    <div class="qr-security">ACCESO SEGURO · EMPRESA ACTIVA · VIGENCIA 15 MINUTOS</div>
+    <div id="checkinQrCode" class="checkin-qr-code"></div>
+    <div class="qr-information">
+      <strong id="qrVehicleName">Vehículo</strong>
+      <span id="qrDriverName">Conductor asignado</span>
+      <span id="qrExpiry">Preparando vencimiento…</span>
+      <small>El código no contiene la dirección del servidor y solo funciona para esta empresa.</small>
+    </div>
+    <div class="modal-actions qr-actions">
+      <button id="qrDownload" class="ghost" type="button">Descargar PNG</button>
+      <button id="qrPrint" class="ghost" type="button">Imprimir</button>
+      <button id="qrDone" class="primary" type="button">Listo</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- NEXO IA R1.8.9: dock fijo al costado derecho; nunca usa left para ocultar el círculo -->
+
+
+<div id="qrScannerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrScannerTitle">
+  <div class="modal-card qr-scanner-card">
+    <div class="modal-head"><div><h3 id="qrScannerTitle">📷 Escáner QR de Checklist</h3><small>La cámara se inicia al abrir. Apunta al QR temporal del vehículo.</small></div><button id="qrScannerClose" type="button">×</button></div>
+    <div class="qr-scanner-security">EMPRESA ACTIVA · TOKEN FIRMADO · VIGENCIA 15 MINUTOS</div>
+    <div class="qr-video-wrap"><video id="qrScannerVideo" playsinline muted></video><canvas id="qrScannerCanvas" hidden></canvas><div class="qr-scan-frame"><span></span></div></div>
+    <div id="qrScannerStatus" class="qr-scanner-status">Cámara detenida.</div>
+    <label class="qr-manual-label">Código QR / token<input id="qrScannerInput" type="text" placeholder="EFQ1... / EFLEET-CHECKIN:..."></label>
+    <div class="modal-actions"><button id="qrScannerStart" class="ghost" type="button">↻ Reiniciar cámara</button><button id="qrScannerValidate" class="primary" type="button">✓ Validar código</button></div>
+  </div>
+</div>
+
+<div id="voiceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="voiceTitle">
+  <div class="modal-card voice-modal-card">
+    <div class="modal-head"><div><h3 id="voiceTitle">Comando de voz</h3><small id="voiceSubtitle">Habla de forma natural.</small></div><button id="voiceClose" type="button">×</button></div>
+    <div class="voice-recorder">
+      <button id="voiceRecord" class="voice-record-button" type="button">🎙</button>
+      <strong id="voiceStatus">Presiona para grabar</strong>
+      <span>La nota original se conserva aunque NEXO no esté disponible.</span>
+    </div>
+    <label>Transcripción / instrucción<textarea id="voiceTranscript" rows="5" placeholder="Ej.: Reporta pérdida de aceite en el vehículo GLJD30 y avisa a Gerencia."></textarea></label>
+    <div class="modal-actions"><button id="voiceCancel" class="ghost" type="button">Cancelar</button><button id="voiceSend" class="primary" type="button">Enviar comando</button></div>
+  </div>
+</div>
+<div id="nexoDock" class="nexo-dock hidden" aria-label="Controles NEXO IA">
+  <button id="nexoVisibilityToggle" class="nexo-visibility-toggle" type="button" aria-label="Ocultar círculo de NEXO IA" title="Ocultar círculo de NEXO IA" aria-expanded="true">›</button>
+  <button id="nexoFab" class="nexo-fab" type="button" aria-label="Abrir NEXO IA">
+    <span class="nexo-ring"></span>
+    <span class="nexo-core">Nexo</span>
+    <span class="nexo-ia-badge">IA</span>
+    <span class="nexo-label" aria-hidden="true">NEXO IA</span>
+  </button>
+</div>
+
+<aside id="nexoPanel" class="nexo-panel hidden" aria-label="NEXO IA">
+  <div class="nexo-head">
+    <div>
+      <strong>NEXO IA</strong>
+      <small>Asistente técnico y económico</small>
+    </div>
+    <button id="nexoClose" type="button">×</button>
+  </div>
+
+  <div id="nexoMessages" class="nexo-messages">
+    <div class="nexo-msg assistant">
+      Hola. Puedo analizar fallas, mantenciones, costos, combustible y salud de la flota.
+    </div>
+  </div>
+
+  <div class="nexo-quick">
+    <button data-nexo-q="¿Qué vehículos requieren atención primero?">Riesgo</button>
+    <button data-nexo-q="Muéstrame las fallas críticas y qué debo priorizar.">Fallas críticas</button>
+    <button data-nexo-q="¿Qué mantenciones están pendientes o vencidas?">Mantenciones</button>
+    <button data-nexo-q="Analiza los costos de la flota y dime dónde estamos gastando más.">Costos</button>
+  </div>
+
+  <div class="nexo-input-row">
+    <textarea id="nexoInput" rows="2" placeholder="Pregunta a NEXO…"></textarea>
+    <button id="nexoSend" class="primary" type="button">Enviar</button>
+  </div>
+</aside>
+
+<script src="qrcode_WEB_R1_8_0.min.js"></script>
+<script src="exporters_R1_8_0.js?v=1832f"></script>
+<script src="app.js?v=1833"></script>
+</body>
+</html>
