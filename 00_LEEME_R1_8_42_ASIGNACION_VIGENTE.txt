@@ -1,0 +1,6 @@
+E-FLEET WEB R1.8.42
+
+- La Web mantiene el paquete completamente plano para GitHub.
+- La API R1.8.42 aplica también a Web la regla de una sola asignación vigente para Conductor/Supervisor.
+- Vehículos y Documentos de perfiles operativos quedan acotados al vehículo de la asignación vigente más reciente.
+- Velocidad continúa sin mapas.
