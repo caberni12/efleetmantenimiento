@@ -1618,3 +1618,195 @@ input,select,textarea,button,dialog{color-scheme:light only!important}
 
 /* R1.8.36 · Asignaciones legibles: patente y usuario por sobre IDs técnicos */
 .assignment-card-modern{padding:16px 17px;border-radius:18px}.assignment-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.assignment-eyebrow{display:block;color:#6d7e92;font-size:10px;font-weight:900;letter-spacing:.08em}.assignment-plate{margin-top:4px;color:#142b45;font-size:22px;font-weight:950;letter-spacing:.035em}.assignment-vehicle-desc{margin-top:2px;color:#65758a;font-size:12px;font-weight:700}.assignment-person{display:flex;align-items:center;gap:10px;margin-top:12px;padding:11px 12px;border:1px solid #e5ecf4;border-radius:13px;background:#f8fbfe}.assignment-person-icon{font-size:23px}.assignment-person>div{display:flex;flex-direction:column;min-width:0}.assignment-person small{color:#6d7e92;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.assignment-person strong{color:#183450;font-size:14px;font-weight:900}.assignment-person span:not(.assignment-person-icon){margin-top:2px;color:#708196;font-size:11px}.assignment-card-modern .assignment-meta{display:flex;flex-direction:column;gap:3px;margin:9px 0 0}.assignment-card-modern .card-actions{margin-top:11px}.assignment-card-modern .assignment-status{white-space:nowrap}
+
+/* ========================================================================== */
+/* R1.8.37 · SHELL ESTABLE · HEADER SIN COMPRESIÓN + SCROLL CENTRAL AISLADO   */
+/* ========================================================================== */
+/* El documento no desplaza la navegación global: sidebar y header permanecen estables. */
+html,body{height:100%!important;overflow:hidden!important}
+.app-shell{height:100dvh!important;min-height:100dvh!important;overflow:hidden!important}
+.app-shell>main{height:100dvh!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;scrollbar-gutter:stable!important}
+.sidebar{height:100dvh!important;min-height:0!important;align-self:stretch!important}
+
+/* El header reparte el espacio explícitamente: contenido flexible + acciones no comprimibles. */
+header{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) max-content!important;
+  align-items:center!important;
+  column-gap:16px!important;
+  row-gap:10px!important;
+  min-width:0!important;
+}
+.header-main{
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:46px minmax(190px,1fr) max-content!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.header-copy{min-width:0!important;max-width:none!important}
+.header-copy-line{min-width:0!important}
+.header-copy h2{max-width:100%!important;min-width:0!important}
+.company-nav-cluster{
+  min-width:0!important;
+  width:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  flex-wrap:nowrap!important;
+}
+.company-nav-cluster .company-identity{
+  width:300px!important;
+  min-width:260px!important;
+  max-width:300px!important;
+  flex:0 0 auto!important;
+  margin-left:0!important;
+}
+.company-nav-cluster .company-identity>div{min-width:0!important}
+.company-nav-cluster .company-identity strong{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.header-actions{
+  display:grid!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:max-content!important;
+  align-items:center!important;
+  justify-content:end!important;
+  gap:9px!important;
+  min-width:max-content!important;
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+}
+.header-actions>*{flex:0 0 auto!important;min-width:0}
+.notification-bell{
+  position:relative!important;
+  width:46px!important;
+  min-width:46px!important;
+  height:46px!important;
+  flex:0 0 46px!important;
+  overflow:visible!important;
+  isolation:isolate!important;
+}
+.notification-count{
+  right:-7px!important;
+  top:-8px!important;
+  z-index:4!important;
+  pointer-events:none!important;
+  box-shadow:0 2px 7px rgba(146,24,24,.22)!important;
+}
+.profile-wrap{flex:0 0 auto!important;min-width:46px!important}
+.profile-button{flex:0 0 46px!important;width:46px!important;height:46px!important}
+#btnRefresh{min-width:116px!important;white-space:nowrap!important}
+.module-export-button{flex:0 0 46px!important;width:46px!important;min-width:46px!important;height:46px!important;padding:0!important}
+
+/* Con el slider abierto, antes de comprimir el header las acciones bajan a una fila propia. */
+@media (min-width:761px) and (max-width:1450px){
+  .app-shell:not(.sidebar-collapsed) header{
+    grid-template-columns:minmax(0,1fr)!important;
+    align-items:center!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .header-actions{
+    grid-column:1!important;
+    justify-self:end!important;
+    min-width:0!important;
+  }
+  .app-shell:not(.sidebar-collapsed) .header-main{
+    grid-template-columns:46px minmax(230px,1fr) max-content!important;
+  }
+}
+
+/* Escritorio más angosto: nunca superponer empresa/campanita; se reduce texto, no controles. */
+@media (min-width:761px) and (max-width:1120px){
+  .company-nav-cluster .company-identity{width:260px!important;min-width:230px!important;max-width:260px!important}
+  .header-main{grid-template-columns:46px minmax(150px,1fr) max-content!important}
+}
+
+/* Móvil: drawer superpuesto; el main conserva su ancho completo y el header no se desplaza. */
+@media(max-width:760px){
+  html,body{overflow:hidden!important}
+  .app-shell{height:100dvh!important;overflow:hidden!important}
+  .app-shell>main{height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important}
+  header{grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+  .header-main{grid-template-columns:46px minmax(0,1fr)!important;gap:9px!important}
+  .company-nav-cluster{grid-column:1/-1!important;width:100%!important;min-width:0!important}
+  .company-nav-cluster .company-identity{width:min(230px,calc(100vw - 90px))!important;min-width:0!important;max-width:230px!important}
+  .header-actions{grid-column:1!important;width:100%!important;min-width:0!important;grid-auto-columns:max-content!important;justify-content:end!important;overflow:visible!important}
+  #btnRefresh{min-width:44px!important;width:44px!important}
+}
+
+/* ========================================================================== */
+/* R1.8.38 · HEADER PEGADO AL NAVEGADOR · SIN FRANJAS GRISES                  */
+/* ========================================================================== */
+html,body{
+  margin:0!important;
+  padding:0!important;
+  background:#f4f6f9!important;
+}
+#appView.app-shell{
+  margin:0!important;
+  padding:0!important;
+  inset:auto!important;
+  background:#f4f6f9!important;
+}
+.app-shell>main{
+  padding:0 26px 30px!important;
+  margin:0!important;
+  background:#f4f6f9!important;
+}
+.app-shell>main>header{
+  position:sticky!important;
+  top:0!important;
+  margin:0 -26px 0!important;
+  padding:14px 26px!important;
+  min-height:104px!important;
+  background:#fff!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border-top:0!important;
+  border-bottom:1px solid #dfe7ef!important;
+  box-shadow:0 3px 12px rgba(24,54,84,.06)!important;
+  z-index:90!important;
+}
+.app-shell>main>.view{
+  padding-top:18px!important;
+}
+.app-shell>main>.view:not(.active){
+  padding-top:0!important;
+}
+/* Evita que el fondo del shell asome sobre el header durante overscroll. */
+.app-shell>main::before{
+  content:"";
+  position:fixed;
+  top:0;
+  height:1px;
+  background:#fff;
+  pointer-events:none;
+  z-index:89;
+}
+.app-shell:not(.sidebar-collapsed)>main::before{left:268px;right:0}
+.app-shell.sidebar-collapsed>main::before{left:0;right:0}
+
+@media(max-width:760px){
+  .app-shell>main{
+    padding:0 14px 28px!important;
+  }
+  .app-shell>main>header{
+    margin:0 -14px 0!important;
+    padding:11px 14px!important;
+    min-height:auto!important;
+  }
+  .app-shell>main>.view{padding-top:14px!important}
+  .app-shell>main::before{left:0!important;right:0!important}
+}
+
+/* R1.8.39 · Login: mostrar/ocultar contraseña + Enter para ingresar */
+.login-password-field{position:relative;width:100%;}
+.access-card .login-password-field input{padding-right:52px!important;}
+.login-password-toggle{position:absolute!important;right:8px!important;top:50%!important;transform:translateY(-50%)!important;width:38px!important;height:38px!important;min-width:38px!important;padding:0!important;margin:0!important;display:grid!important;place-items:center!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#315a83!important;box-shadow:none!important;cursor:pointer!important;z-index:2!important;}
+.login-password-toggle:hover{background:#e8f6ff!important;color:#0877dc!important;}
+.login-password-toggle:focus-visible{outline:2px solid #0ba8e9!important;outline-offset:1px!important;}
+.login-password-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}
+.login-password-toggle .eye-closed{display:none;}
+.login-password-toggle.showing .eye-open{display:none;}
+.login-password-toggle.showing .eye-closed{display:block;}
+.login-enter-hint{display:block;margin-top:6px;color:#728399;font-size:11px;font-weight:650;}
+@media(max-width:520px){.login-enter-hint{font-size:10px}.login-password-toggle{right:6px!important;}}

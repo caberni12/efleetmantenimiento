@@ -1,8 +1,8 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.34';
-const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,notificationRequestSeq:0,notificationAppliedSeq:0};
+const WEB_VERSION='1.8.40';
+const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
  {id:'DASHBOARD',label:'Dashboard',actions:['LEER']},{id:'EMPRESA',label:'Empresa',actions:['LEER','EDITAR','LOGO']},{id:'PERFILES',label:'Perfiles',actions:['LEER','EDITAR']},
@@ -388,7 +388,7 @@ function ringKpi(label,value,progress=0,tone='blue',detail='',action=''){
  return `<article class="ring-kpi ${esc(tone)}${money?' money':''}${action?' actionable':''}"${click}><div class="ring-kpi-top"><span class="ring-kpi-icon">${esc(kpiGlyph(label))}</span><span class="ring-kpi-state">EN LÍNEA</span></div><div class="ring-gauge" style="--progress:${p}"><div><strong>${esc(value)}</strong><small>INDICADOR</small></div></div><div class="ring-kpi-copy"><h4>${esc(label)}</h4>${detail?`<p>${esc(detail)}</p>`:''}</div></article>`;
 }
 function notificationFilterLabel(key=''){const map={pendientes:'Pendientes',criticas:'Críticas',prioridad_alta:'Prioridad alta',respuesta_requerida:'Respuesta requerida'};return map[key]||'Notificaciones';}
-function notificationRowsForFilter(rows,key=''){const all=[...(rows||[])];if(!key)return all;return all.filter(n=>{const awaiting=String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE');const unread=String(n.leida||'NO').toUpperCase()!=='SI'||awaiting;const priority=notificationPriorityClass(n);if(key==='pendientes')return unread;if(key==='criticas')return priority==='critical'&&unread;if(key==='prioridad_alta')return priority==='high'&&unread;if(key==='respuesta_requerida')return awaiting;return true})}
+function notificationRowsForFilter(rows,key=''){const all=[...(rows||[])];if(!key)return all;return all.filter(n=>{const awaiting=String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE');const unread=String(n.leida||'NO').toUpperCase()!=='SI';const priority=notificationPriorityClass(n);if(key==='pendientes')return unread;if(key==='criticas')return priority==='critical'&&unread;if(key==='prioridad_alta')return priority==='high'&&unread;if(key==='respuesta_requerida')return awaiting;return true})}
 function notificationSelectionSummary(key,rows){const label=notificationFilterLabel(key),count=(rows||[]).length;if(key==='pendientes')return {eyebrow:'RESUMEN ACTIVO',title:`${label} · ${count}`,text:'Aquí aparece el detalle filtrado de la categoría seleccionada.'};if(key==='criticas')return {eyebrow:'ATENCIÓN INMEDIATA',title:`${label} · ${count}`,text:'Se muestran solo notificaciones críticas que requieren prioridad operacional.'};if(key==='prioridad_alta')return {eyebrow:'GESTIÓN PRIORIZADA',title:`${label} · ${count}`,text:'Se muestran notificaciones de prioridad alta pendientes de gestión.'};if(key==='respuesta_requerida')return {eyebrow:'RESPUESTA OPERACIONAL',title:`${label} · ${count}`,text:'Se muestran las alertas que todavía requieren respuesta o aceptación.'};return {eyebrow:'NOTIFICACIONES',title:'Notificaciones y alertas',text:'Toca una tarjeta KPI o una notificación para ver su detalle.'}}
 function renderInlineNotificationDetail(n){const awaiting=String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE';return `<div class="notification-detail-hero ${notificationPriorityClass(n)}"><div class="notification-detail-icon">${notificationIcon(n)}</div><div><span>${esc(n.prioridad||'NORMAL')}</span><h4>${esc(n.titulo||'Notificación')}</h4><p>${esc(n.mensaje_legible||n.mensaje||'Sin detalle adicional.')}</p></div></div><div class="notification-detail-grid">${notificationDetailRows(n)}</div>${awaiting?'<div class="notification-detail-warning">Esta notificación todavía requiere una respuesta operacional. Marcarla como leída no cierra esa obligación.</div>':''}<div class="notification-detail-actions">${notificationReadButton(n)}${n.audio_disponible?`<button type="button" class="mini detail" data-audio-notification="${esc(n.id)}">▶ Escuchar nota de voz</button>`:''}${String(n.entidad_tipo||'').toUpperCase()==='CHECKIN'?`<button type="button" class="mini edit" data-resend-checklist-notification="${esc(n.id)}">↻ Reenviar Checklist</button>`:''}</div>`}
 function updateNotificationNavigationState(){const btn=$('pageBackButton'),inline=$('notificationPageInlineBack'),selection=$('notificationPageSelection');const inNotifications=liveSyncView()==='notificaciones';const hasDetail=Boolean(S.currentNotificationDetailId);const hasFilter=Boolean(S.notificationPageFilter);if(btn){btn.classList.remove('hidden');btn.disabled=false;btn.textContent='←';btn.title=inNotifications?(hasDetail?'Cerrar detalle':hasFilter?'Quitar filtro':'Volver al módulo anterior'):'Volver al módulo anterior';}if(inline)inline.classList.toggle('hidden',!(inNotifications&&(hasDetail||hasFilter)));if(selection)selection.classList.toggle('hidden',!(inNotifications&&(hasFilter||hasDetail)))}
@@ -443,7 +443,7 @@ const ADV_FILTERS={
  talleres:{state:['estado'],category:['especialidad','categoria'],criticality:['criticidad','prioridad'],date:['actualizado_en','creado_en']},
  historial:{state:['estado'],category:['tipo','categoria'],criticality:['prioridad','criticidad'],date:['fecha_termino','fecha_inicio','fecha_programada','actualizado_en']},
  predicciones:{state:['estado'],category:['tipo_prediccion','categoria'],criticality:['nivel_riesgo','criticidad'],date:['fecha_prediccion','creado_en','actualizado_en']},
- notificaciones:{state:r=>String(r.estado_respuesta||((String(r.leida||'NO').toUpperCase()==='SI')?'LEIDA':'PENDIENTE')),category:['categoria','entidad_tipo'],criticality:['prioridad','criticidad'],date:['fecha_hora','creado_en']},
+ notificaciones:{state:r=>String(r.leida||'NO').toUpperCase()==='SI'?'LEIDA':'NO LEIDA',category:['categoria','entidad_tipo'],criticality:['prioridad','criticidad'],date:['fecha_hora','creado_en']},
  combustible:{state:['estado'],category:['tipo_combustible','combustible','categoria'],criticality:r=>String(r.consumo_anomalo||'').toUpperCase()==='SI'?'ANOMALIA':'NORMAL',date:['fecha_hora','fecha_carga','creado_en']},
  usuarios:{state:['estado'],category:['rol_id'],criticality:['criticidad'],date:['ultimo_acceso','creado_en','actualizado_en']},
  reportes:{state:['estado'],category:['categoria','tipo','tipo_documento','resultado_tecnico'],criticality:['criticidad','severidad','prioridad','nivel_riesgo'],date:['fecha_hora','fecha_inicio','fecha_programada','fecha_detectada','creado_en','actualizado_en']},
@@ -1480,31 +1480,36 @@ function notificationPriorityClass(n){
 async function hydrateNotificationsRich(force=false){
  if(!S.token||S.notificationHydratePromise)return S.notificationHydratePromise;
  const now=Date.now();if(!force&&now-Number(S.notificationHydrateAt||0)<30000)return;
+ const badgeSeq=nextNotificationRequestSeq(),dataSeq=++S.notificationDataRequestSeq,epoch=Number(S.notificationMutationEpoch||0);
  S.notificationHydratePromise=api('NOTIFICACIONES_TIEMPO_REAL',{limit:100,modo:'DETALLE'},true).then(j=>{
-   S.notificationHydrateAt=Date.now();S.notifications=j.rows||S.notifications||[];
+   const rows=j.rows||[];const serverUnread=Number(j.noLeidas||0),critical=rows.some(n=>notificationPriorityClass(n)==='critical'&&String(n.leida||'NO').toUpperCase()!=='SI');
+   applyNotificationBadgeSnapshot(serverUnread,badgeSeq,critical);
+   // Secuencia de datos separada del pulso de campana: una lectura vieja no revive un estado anterior.
+   if(epoch!==Number(S.notificationMutationEpoch||0)||dataSeq<Number(S.notificationDataAppliedSeq||0))return;
+   S.notificationDataAppliedSeq=dataSeq;S.notificationHydrateAt=Date.now();S.notifications=rows;
    S.notificationPending=(S.notifications||[]).filter(n=>String(n.leida||'NO').toUpperCase()!=='SI'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE'));
    const viewOpen=liveSyncView()==='notificaciones'||!$('notificationCenter')?.classList.contains('hidden');
-   if(viewOpen){populateAdvancedFilter('notificaciones',S.notifications);renderNotifications();renderNotificationPage(Number(S.lastUnread||0));checkAssignmentEmergency();}
+   if(viewOpen){populateAdvancedFilter('notificaciones',S.notifications);renderNotifications();renderNotificationPage(Number(S.lastUnread??serverUnread));checkAssignmentEmergency();}
  }).catch(()=>{}).finally(()=>{S.notificationHydratePromise=null});
  return S.notificationHydratePromise;
 }
 async function loadNotifications(showErrors=true){
  if(!S.token)return;
- // Primer pintado inmediato con lo último disponible, sin esperar red.
  if((S.notifications||[]).length){renderNotifications();renderNotificationPage(Number(S.lastUnread||0));}
  if(S.notificationFetchPromise)return S.notificationFetchPromise;
  S.notificationFetchPromise=(async()=>{
-  const seq=nextNotificationRequestSeq();
+  const badgeSeq=nextNotificationRequestSeq(),dataSeq=++S.notificationDataRequestSeq,epoch=Number(S.notificationMutationEpoch||0);
   try{
    const j=await api('NOTIFICACIONES_TIEMPO_REAL',{limit:100,modo:'RAPIDO'},true);
-   S.notificationFastAt=Date.now();
+   const rows=j.rows||[];const serverUnread=Number(j.noLeidas||0),critical=rows.some(n=>notificationPriorityClass(n)==='critical'&&String(n.leida||'NO').toUpperCase()!=='SI');
+   applyNotificationBadgeSnapshot(serverUnread,badgeSeq,critical);
+   if(epoch!==Number(S.notificationMutationEpoch||0)||dataSeq<Number(S.notificationDataAppliedSeq||0))return;
+   S.notificationDataAppliedSeq=dataSeq;S.notificationFastAt=Date.now();
    const currentPermissionVersion=Number(S.user?.versionPermisos||1),serverPermissionVersion=Number(j.versionPermisos||currentPermissionVersion);
    if(serverPermissionVersion!==currentPermissionVersion)loadProfile().catch(()=>{});
-   S.notifications=j.rows||[];populateAdvancedFilter('notificaciones',S.notifications);S.notificationPending=(S.notifications||[]).filter(n=>String(n.leida||'NO').toUpperCase()!=='SI'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE'));
-   const serverUnread=Number(j.noLeidas||0),critical=S.notifications.some(n=>notificationPriorityClass(n)==='critical'&&(String(n.leida||'NO').toUpperCase()!=='SI'||String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE'));
-   const applied=applyNotificationBadgeSnapshot(serverUnread,seq,critical),unread=applied?serverUnread:Number(S.lastUnread||0);
-   renderNotifications();renderNotificationPage(unread);checkAssignmentEmergency();
-   // El enriquecimiento de nombres/detalle ocurre después del primer pintado y nunca bloquea la vista.
+   S.notifications=rows;populateAdvancedFilter('notificaciones',S.notifications);
+   S.notificationPending=(S.notifications||[]).filter(n=>String(n.leida||'NO').toUpperCase()!=='SI'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE'));
+   renderNotifications();renderNotificationPage(Number(S.lastUnread??serverUnread));checkAssignmentEmergency();
    const needsRich=liveSyncView()==='notificaciones'||!$('notificationCenter')?.classList.contains('hidden');if(needsRich)hydrateNotificationsRich(showErrors).catch(()=>{});
   }catch(e){if(showErrors)toast('Notificaciones: '+e.message,true)}
  })().finally(()=>{S.notificationFetchPromise=null});
@@ -1548,7 +1553,7 @@ function renderNotifications(){
  const rows=S.notificationPending||[];
  box.innerHTML=rows.length?rows.map(n=>{
    const awaiting=String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE';
-   const unread=String(n.leida||'NO').toUpperCase()!=='SI'||awaiting;
+   const unread=String(n.leida||'NO').toUpperCase()!=='SI';
    const when=n.fecha_hora?new Date(n.fecha_hora).toLocaleString('es-CL'):'';
    return `<div class="notification-item ${unread?'unread':''} ${notificationPriorityClass(n)}" data-notification-open="${esc(n.id)}" role="button" tabindex="0" aria-haspopup="dialog">
       <div class="notification-symbol">${notificationIcon(n)}</div>
@@ -1573,14 +1578,14 @@ function notificationPageFilterMeta(filter){
 }
 function notificationPageFilterRows(filter,sourceRows){
  const rows=Array.isArray(sourceRows)?sourceRows:advancedFilteredRows('notificaciones',S.notifications||[]);
- if(filter==='pending')return rows.filter(n=>String(n.leida||'NO').toUpperCase()!=='SI'||String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE');
+ if(filter==='pending')return rows.filter(n=>String(n.leida||'NO').toUpperCase()!=='SI');
  if(filter==='critical')return rows.filter(n=>notificationPriorityClass(n)==='critical');
  if(filter==='high')return rows.filter(n=>notificationPriorityClass(n)==='high');
  if(filter==='response')return rows.filter(n=>String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE');
  return rows;
 }
 function notificationPageCardMarkup(n){
- const awaiting=String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE',unreadRow=String(n.leida||'NO').toUpperCase()!=='SI'||awaiting,when=n.fecha_hora?new Date(n.fecha_hora).toLocaleString('es-CL'):'';
+ const awaiting=String(n.estado_respuesta||'').toUpperCase()==='PENDIENTE',unreadRow=String(n.leida||'NO').toUpperCase()!=='SI',when=n.fecha_hora?new Date(n.fecha_hora).toLocaleString('es-CL'):'';
  return `<article class="notification-page-card ${unreadRow?'unread':''} ${notificationPriorityClass(n)}" data-notification-open="${esc(n.id)}" role="button" tabindex="0" aria-haspopup="dialog"><div class="notification-symbol">${notificationIcon(n)}</div><div><div class="notification-card-title"><strong>${esc(n.titulo||'Notificación')}</strong><span>${esc(n.prioridad||'NORMAL')}</span></div><p>${esc(n.mensaje_legible||n.mensaje||'')}</p>${(n.vehiculo_patente||n.responsable_nombre||n.usuario_nombre)?`<div class="notification-context page">${n.vehiculo_patente?`<span>🚙 <b>${esc(n.vehiculo_patente)}</b>${n.vehiculo_descripcion?` · ${esc(n.vehiculo_descripcion)}`:''}</span>`:''}${n.responsable_nombre?`<span>👤 ${esc(n.responsable_nombre)}</span>`:n.usuario_nombre?`<span>👤 ${esc(n.usuario_nombre)}</span>`:''}</div>`:''}<small>${esc(n.categoria||n.entidad_tipo||'Sistema')} · ${esc(when)}${awaiting?' · Respuesta pendiente':''}</small><div class="notification-inline-actions"><button type="button" class="mini notification-open-detail" data-notification-open-button="${esc(n.id)}">Ver detalle</button>${notificationReadButton(n)}${n.audio_disponible?`<button type="button" class="mini detail" data-audio-notification="${esc(n.id)}">▶ Escuchar nota de voz</button>`:''}${String(n.entidad_tipo||'').toUpperCase()==='CHECKIN'?`<button type="button" class="mini edit" data-resend-checklist-notification="${esc(n.id)}">↻ Reenviar Checklist</button>`:''}</div></div></article>`;
 }
 function renderNotificationPageDetail(filteredRows){
@@ -1620,15 +1625,34 @@ function openNotifications(){
 }
 function closeNotifications(){$('notificationCenter')?.classList.add('hidden')}
 async function markNotification(id){
- try{await api('MARCAR_NOTIFICACION',{id});const row=(S.notifications||[]).find(x=>String(x.id)===String(id));if(row)row.leida='SI';const pending=(S.notifications||[]).filter(x=>String(x.leida||'NO').toUpperCase()!=='SI').length,critical=(S.notifications||[]).some(n=>String(n.leida||'NO').toUpperCase()!=='SI'&&notificationPriorityClass(n)==='critical');applyNotificationBadgeSnapshot(pending,nextNotificationRequestSeq(),critical);await loadNotifications(false);if(String(S.currentNotificationDetailId||'')===String(id))openNotificationDetail(id);toast('Notificación marcada como leída')}
- catch(e){toast('No fue posible marcar la notificación: '+e.message,true)}
+ try{
+  const j=await api('MARCAR_NOTIFICACION',{id});
+  S.notificationMutationEpoch=Number(S.notificationMutationEpoch||0)+1;
+  const row=(S.notifications||[]).find(x=>String(x.id)===String(id));if(row){row.leida='SI';row.leida_en=j?.row?.leida_en||new Date().toISOString();}
+  S.notificationPending=(S.notifications||[]).filter(n=>String(n.leida||'NO').toUpperCase()!=='SI'||(String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE'));
+  const localUnread=(S.notifications||[]).filter(x=>String(x.leida||'NO').toUpperCase()!=='SI').length;
+  const unread=Number.isFinite(Number(j?.noLeidas))?Number(j.noLeidas):localUnread;
+  const critical=(S.notifications||[]).some(n=>String(n.leida||'NO').toUpperCase()!=='SI'&&notificationPriorityClass(n)==='critical');
+  applyNotificationBadgeSnapshot(unread,nextNotificationRequestSeq(),critical);
+  renderNotifications();renderNotificationPage(unread);if(String(S.currentNotificationDetailId||'')===String(id))openNotificationDetail(id);
+  toast('Notificación marcada como leída');
+  // Esperar cualquier lectura iniciada antes de la mutación y luego confirmar con el servidor.
+  const pendingReads=[S.notificationFetchPromise,S.notificationHydratePromise].filter(Boolean);if(pendingReads.length)await Promise.allSettled(pendingReads);
+  await loadNotifications(false);
+ }catch(e){toast('No fue posible marcar la notificación: '+e.message,true)}
 }
 async function playNotificationAudio(id){try{const j=await api('AUDIO_NOTIFICACION',{id},true);if(!j.url)throw new Error('AUDIO_NO_DISPONIBLE');const a=new Audio(j.url);a.controls=true;a.autoplay=true;const wrap=document.createElement('div');wrap.className='floating-audio-player';wrap.innerHTML='<strong>Nota de voz</strong>';wrap.appendChild(a);const close=document.createElement('button');close.textContent='×';close.onclick=()=>{a.pause();wrap.remove()};wrap.appendChild(close);document.body.appendChild(wrap);await a.play().catch(()=>{});if(j.transcripcion)toast('Audio disponible · transcripción vinculada')}catch(e){toast('Audio: '+e.message,true)}}
 async function resendChecklistNotification(notificationId){try{const j=await api('REENVIAR_NOTIFICACION_CHECKLIST',{notificacion_id:notificationId},true);toast(`Checklist reenviado a ${Number(j.enviadas||0)} destinatario(s)`);await loadNotifications(false)}catch(e){toast('Reenvío Checklist: '+e.message,true)}}
 
 async function markAllNotifications(){
- try{await api('MARCAR_TODAS_NOTIFICACIONES',{});(S.notifications||[]).forEach(x=>x.leida='SI');clearNotificationBellVisual();await loadNotifications(false);toast('Notificaciones marcadas como leídas')}
- catch(e){toast('No fue posible marcar todas: '+e.message,true)}
+ try{
+  const j=await api('MARCAR_TODAS_NOTIFICACIONES',{});S.notificationMutationEpoch=Number(S.notificationMutationEpoch||0)+1;(S.notifications||[]).forEach(x=>{x.leida='SI';x.leida_en=new Date().toISOString();});
+  S.notificationPending=(S.notifications||[]).filter(n=>String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE');
+  const unread=Number.isFinite(Number(j?.noLeidas))?Number(j.noLeidas):0;applyNotificationBadgeSnapshot(unread,nextNotificationRequestSeq(),false);
+  renderNotifications();renderNotificationPage(unread);toast(`${Number(j?.marcadas||0)} notificación(es) marcada(s) como leídas`);
+  const pendingReads=[S.notificationFetchPromise,S.notificationHydratePromise].filter(Boolean);if(pendingReads.length)await Promise.allSettled(pendingReads);
+  await loadNotifications(false);
+ }catch(e){toast('No fue posible marcar todas: '+e.message,true)}
 }
 
 function nexoCollapsed(){return localStorage.getItem('efm_nexo_collapsed')==='1'}
@@ -1919,11 +1943,15 @@ async function sendVoiceCommand(){
 
 document.addEventListener('DOMContentLoaded',()=>{
  document.documentElement.dataset.efleetWebVersion=WEB_VERSION;
- document.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;S.actionButton=b;S.actionButtonAt=Date.now();b.classList.add('ux-feedback-button')},true);
- document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;b.classList.add('ux-feedback-button');if(!b.classList.contains('is-loading')){b.classList.add('tap-loading');setTimeout(()=>b.classList.remove('tap-loading'),360)}},true);
+ document.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b||b.disabled||b.classList.contains('login-password-toggle'))return;S.actionButton=b;S.actionButtonAt=Date.now();b.classList.add('ux-feedback-button')},true);
+ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled||b.classList.contains('login-password-toggle'))return;b.classList.add('ux-feedback-button');if(!b.classList.contains('is-loading')){b.classList.add('tap-loading');setTimeout(()=>b.classList.remove('tap-loading'),360)}},true);
  renderChecklist();
  loadConnection();$('rut').value=S.company?.rut||localStorage.getItem('efm_rut')||'';
  $('btnResolve').onclick=resolveCompany;$('btnSetup').onclick=setup;$('btnLogin').onclick=login;$('btnLogout').onclick=()=>logout(true);$('btnChangeCompany').onclick=()=>clearConnection(false);$('btnClearConnection').onclick=()=>clearConnection(true);
+ const loginPassword=$('loginPassword'),loginEmail=$('loginEmail'),toggleLoginPassword=$('btnToggleLoginPassword');
+ if(toggleLoginPassword&&loginPassword){toggleLoginPassword.onclick=()=>{const show=loginPassword.type==='password';loginPassword.type=show?'text':'password';toggleLoginPassword.setAttribute('aria-pressed',String(show));toggleLoginPassword.setAttribute('aria-label',show?'Ocultar contraseña':'Mostrar contraseña');toggleLoginPassword.title=show?'Ocultar contraseña':'Mostrar contraseña';toggleLoginPassword.classList.toggle('showing',show);loginPassword.focus({preventScroll:true});const n=loginPassword.value.length;try{loginPassword.setSelectionRange(n,n)}catch{}}}
+ const submitLoginOnEnter=e=>{if(e.key!=='Enter'||e.isComposing)return;e.preventDefault();if(!$('stepLogin')?.classList.contains('hidden')&&!$('btnLogin')?.disabled)$('btnLogin').click()};
+ loginEmail?.addEventListener('keydown',submitLoginOnEnter);loginPassword?.addEventListener('keydown',submitLoginOnEnter);
  $('sidebarToggle').onclick=toggleSidebar;$('sidebarClose').onclick=closeSidebar;$('sidebarBackdrop').onclick=closeSidebar;
  window.addEventListener('resize',()=>{restoreSidebarState();syncNexoVisibility()});
  window.addEventListener('orientationchange',()=>setTimeout(syncNexoVisibility,80));
