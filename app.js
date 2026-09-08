@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.59';
+const WEB_VERSION='1.8.60';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
@@ -772,7 +772,7 @@ function filteredCheckinHistory(){return advancedFilteredRows('checkinhistorial'
 function renderCheckinHistory(){const rows=filteredCheckinHistory(),approved=rows.filter(x=>String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI').length,noApto=rows.filter(x=>String(x.resultado_tecnico||'').toUpperCase().includes('NO APTO')).length;$('checkinHistoryKpis').innerHTML=ringKpi('Inspecciones',rows.length,Math.min(100,rows.length*2),'blue','Historial filtrado')+ringKpi('Aprobados',approved,rows.length?approved/rows.length*100:0,'green','Operacionales')+ringKpi('No aptos',noApto,rows.length?noApto/rows.length*100:0,noApto?'red':'green','Requieren atención');$('checkinHistoryRows').innerHTML=rows.length?rows.map(checkinHistoryCard).join(''):'<div class="notification-empty">No hay Checklist para los filtros seleccionados.</div>'}
 function checkinHistoryCard(x){const v=S.vehicles.find(v=>v.id===x.vehiculo_id)||{},d=S.drivers.find(d=>d.id===x.conductor_id)||{},vehicleLabel=x.vehiculo_patente||v.patente||'Vehículo asociado',driverLabel=x.conductor_nombre||d.nombre||'Sin conductor',approved=String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI';return `<article class="history-check-card"><div class="history-check-head"><div><strong>${esc(vehicleLabel)}</strong><small>${esc(driverLabel)}</small></div><span class="badge ${String(x.resultado_tecnico||'').includes('NO APTO')?'danger':String(x.resultado_tecnico||'').includes('OBS')?'warn':'ok'}">${esc(x.resultado_tecnico||x.estado||'PENDIENTE')}</span></div><div class="history-check-grid"><span><small>Fecha</small><strong>${esc(x.fecha_inicio?new Date(x.fecha_inicio).toLocaleString('es-CL'):'—')}</strong></span><span><small>KM</small><strong>${Number(x.kilometraje||0).toLocaleString('es-CL')}</strong></span><span><small>Aprobación</small><strong>${approved?'APROBADO':'PENDIENTE'}</strong></span></div><p>${esc(x.observacion_general||'Sin observación general')}</p><div class="card-actions"><button class="mini detail" data-checkin-detail="${esc(x.id)}">Ver inspección</button><button class="mini detail" data-checkin-pdf="${esc(x.id)}" title="Exportar PDF" aria-label="Exportar PDF">📄</button>${permissionAllowed('CHECKIN','APROBAR_DIRECTO')&&!approved?`<button class="mini approve" data-approve-checkin="${esc(x.id)}">✓ Aprobar directo</button>`:''}</div></article>`}
 async function loadCheckinApprovals(){if(!isManagement())return showView('checkin');await ensureCatalogs();const j=await api('listar',{recurso:'CHECKINS',limit:500});S.checkinHistory=j.rows||[];populateAdvancedFilter('checkinaprobaciones',S.checkinHistory);renderCheckinApprovals()}
-function renderCheckinApprovals(){const all=(S.checkinHistory||[]).filter(x=>!(String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI')),rows=advancedFilteredRows('checkinaprobaciones',all),noApto=rows.filter(x=>String(x.resultado_tecnico||'').toUpperCase().includes('NO APTO')).length;$('checkinApprovalKpis').innerHTML=ringKpi('Pendientes',rows.length,Math.min(100,rows.length*8),'amber','Por revisar')+ringKpi('No aptos',noApto,rows.length?noApto/rows.length*100:0,noApto?'red':'green','Resultado técnico conservado');$('checkinApprovalRows').innerHTML=rows.length?rows.map(checkinHistoryCard).join(''):'<div class="notification-empty">No hay Checklist pendientes para estos filtros.</div>'}
+function renderCheckinApprovals(){const all=(S.checkinHistory||[]).filter(x=>String(x.requiere_decision||'').toUpperCase()==='SI'||String(x.estado||'').toUpperCase()==='PENDIENTE_DECISION'),rows=advancedFilteredRows('checkinaprobaciones',all),noApto=rows.filter(x=>String(x.resultado_tecnico||'').toUpperCase().includes('NO APTO')).length;$('checkinApprovalKpis').innerHTML=ringKpi('Pendientes',rows.length,Math.min(100,rows.length*8),'amber','Por revisar')+ringKpi('No aptos',noApto,rows.length?noApto/rows.length*100:0,noApto?'red':'green','Resultado técnico conservado');$('checkinApprovalRows').innerHTML=rows.length?rows.map(checkinHistoryCard).join(''):'<div class="notification-empty">No hay Checklist pendientes para estos filtros.</div>'}
 
 async function loadWorkshops(){const j=await api('listar',{recurso:'TALLERES',limit:300});S.talleres=j.rows||[];S.rows.TALLERES=S.talleres;populateAdvancedFilter('talleres',S.talleres);renderWorkshops()}
 function renderWorkshops(){const rows=advancedFilteredRows('talleres',S.talleres||[]),active=rows.filter(x=>String(x.estado||'').toUpperCase()==='ACTIVO').length,avg=rows.length?rows.reduce((a,x)=>a+Number(x.calidad_porcentaje||100),0)/rows.length:0;$('workshopKpis').innerHTML=ringKpi('Talleres',rows.length,Math.min(100,rows.length*10),'blue','Filtrados')+ringKpi('Activos',active,rows.length?active/rows.length*100:0,'green','Disponibles')+ringKpi('Calidad promedio',`${Math.round(avg)}%`,avg,avg<70?'red':avg<85?'amber':'green','Reparación');$('talleresRows').innerHTML=rows.length?rows.map(x=>`<article class="workshop-card"><div class="workshop-head"><span>🏭</span><div><h4>${esc(x.nombre)}</h4><p>${esc(x.especialidad||'Taller general')}</p></div><span class="badge ${String(x.estado).toUpperCase()==='ACTIVO'?'ok':'warn'}">${esc(x.estado||'ACTIVO')}</span></div><div class="workshop-info"><span class="workshop-address"><small>DIRECCIÓN</small><strong>${esc(x.direccion_normalizada||x.direccion||'Sin dirección')}</strong>${x.comuna||x.ciudad?`<em>${esc([x.comuna,x.ciudad].filter(Boolean).join(' · '))}</em>`:''}</span><span><small>TELÉFONO</small><strong>${esc(x.telefono||'—')}</strong></span><span><small>CONTACTO</small><strong>${esc(x.contacto||x.correo||'—')}</strong></span><span><small>CALIDAD</small><strong>${Number(x.calidad_porcentaje||100).toLocaleString('es-CL')}%</strong></span></div><div class="card-actions"><button class="mini detail" data-workshop-map="${esc(x.id)}">📍 Ver ubicación</button></div>${adminActions('taller',x.id)}</article>`).join(''):'<div class="notification-empty">No hay talleres para los filtros seleccionados.</div>'}
@@ -802,7 +802,7 @@ async function loadSpeedModule(){
 async function saveVehicleSpeedLimit(button){const card=button.closest('.speed-limit-card'),input=card?.querySelector('input'),limit=Number(input?.value||0);if(limit<10||limit>220)return toast('Ingresa un límite entre 10 y 220 km/h',true);loading(button,true);try{await api('CONFIGURAR_LIMITE_VELOCIDAD',{vehiculo_id:button.dataset.speedLimitSave,limite_kmh:limit});toast('Límite individual guardado');await loadSpeedModule()}catch(e){toast('Velocidad: '+e.message,true)}finally{loading(button,false)}}
 async function applyGlobalSpeedLimit(){const check=$('speedSelectAll'),input=$('speedGlobalLimit'),button=$('speedApplyGlobal'),limit=Number(input?.value||0);if(!check?.checked)return toast('Activa Seleccionar todo para aplicar un límite global',true);if(limit<10||limit>220)return toast('Ingresa una velocidad máxima entre 10 y 220 km/h',true);const total=(S.vehicles||[]).length;if(!total)return toast('No hay vehículos disponibles',true);if(!confirm(`Se aplicará ${limit} km/h como velocidad máxima a ${total} vehículo(s). ¿Continuar?`))return;loading(button,true);try{const j=await api('CONFIGURAR_LIMITE_VELOCIDAD_MASIVO',{seleccionar_todo:true,limite_kmh:limit});toast(`Límite global aplicado a ${Number(j.actualizados??j.total??total)} vehículo(s)`);await loadSpeedModule()}catch(e){toast('Velocidad: '+e.message,true)}finally{loading(button,false)}}
 
-function currentViewRows(){const v=document.querySelector('#nav button.active')?.dataset.view||'dashboard';const maps={vehiculos:advancedFilteredRows('vehiculos',S.vehicles),conductores:advancedFilteredRows('conductores',S.drivers),asignaciones:advancedFilteredRows('asignaciones',S.assignments||[]),documentos:advancedFilteredRows('documentos',S.documents||[]),checkin:S.rows.CHECKINS||[],checkinhistorial:filteredCheckinHistory(),checkinaprobaciones:advancedFilteredRows('checkinaprobaciones',(S.checkinHistory||[]).filter(x=>!(String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI'))),fallas:advancedFilteredRows('fallas',S.rows.FALLAS||[]),mantenciones:advancedFilteredRows('mantenciones',S.rows.MANTENCIONES||[]),ordenes:advancedFilteredRows('ordenes',S.orders||S.rows.ORDENES_TRABAJO||[]),historial:advancedFilteredRows('historial',S.history||S.rows.MANTENCIONES||[]),talleres:advancedFilteredRows('talleres',S.talleres||[]),predicciones:advancedFilteredRows('predicciones',S.rows.PREDICCIONES||[]),notificaciones:advancedFilteredRows('notificaciones',S.notifications||[]),combustible:advancedFilteredRows('combustible',S.rows.COMBUSTIBLE||[]),velocidad:advancedFilteredRows('velocidad',S.rows.EVENTOS_VELOCIDAD||[]),usuarios:advancedFilteredRows('usuarios',S.users||[]),presupuesto:S.budgetReportRows||[],reportes:S.reportRows||[],auditoria:advancedFilteredRows('auditoria',S.auditRows||[]),perfiles:S.roleProfiles||[],empresa:S.companyConfig?[S.companyConfig]:[]};return{view:v,rows:(maps[v]||[]).map(reportNormalizeRow)}}
+function currentViewRows(){const v=document.querySelector('#nav button.active')?.dataset.view||'dashboard';const maps={vehiculos:advancedFilteredRows('vehiculos',S.vehicles),conductores:advancedFilteredRows('conductores',S.drivers),asignaciones:advancedFilteredRows('asignaciones',S.assignments||[]),documentos:advancedFilteredRows('documentos',S.documents||[]),checkin:S.rows.CHECKINS||[],checkinhistorial:filteredCheckinHistory(),checkinaprobaciones:advancedFilteredRows('checkinaprobaciones',(S.checkinHistory||[]).filter(x=>String(x.requiere_decision||'').toUpperCase()==='SI'||String(x.estado||'').toUpperCase()==='PENDIENTE_DECISION')),fallas:advancedFilteredRows('fallas',S.rows.FALLAS||[]),mantenciones:advancedFilteredRows('mantenciones',S.rows.MANTENCIONES||[]),ordenes:advancedFilteredRows('ordenes',S.orders||S.rows.ORDENES_TRABAJO||[]),historial:advancedFilteredRows('historial',S.history||S.rows.MANTENCIONES||[]),talleres:advancedFilteredRows('talleres',S.talleres||[]),predicciones:advancedFilteredRows('predicciones',S.rows.PREDICCIONES||[]),notificaciones:advancedFilteredRows('notificaciones',S.notifications||[]),combustible:advancedFilteredRows('combustible',S.rows.COMBUSTIBLE||[]),velocidad:advancedFilteredRows('velocidad',S.rows.EVENTOS_VELOCIDAD||[]),usuarios:advancedFilteredRows('usuarios',S.users||[]),presupuesto:S.budgetReportRows||[],reportes:S.reportRows||[],auditoria:advancedFilteredRows('auditoria',S.auditRows||[]),perfiles:S.roleProfiles||[],empresa:S.companyConfig?[S.companyConfig]:[]};return{view:v,rows:(maps[v]||[]).map(reportNormalizeRow)}}
 function exportCurrentView(kind){const {view,rows}=currentViewRows();if(!rows.length)return toast('Este módulo no tiene datos cargados para exportar',true);const title=(document.querySelector('#nav button.active')?.textContent||view).replace(/^\S+\s*/,'').trim(),stamp=chileDayKey(),file=`E-Fleet_${title.replace(/[^A-Za-z0-9ÁÉÍÓÚáéíóúÑñ]+/g,'_')}_${stamp}`;S.reportRows=rows;if(kind==='XLSX')EFleetExport.toXlsx(file+'.xlsx',reportExportRows(),title.slice(0,28));else EFleetExport.toPdf(file+'.pdf',`E-Fleet · ${title}`,reportExportRows(),`${S.company?.nombre||''} · ${S.company?.rut||''}`)}
 
 
@@ -937,7 +937,8 @@ async function loadCheckin(){
    const v=S.vehicles.find(v=>v.id===x.vehiculo_id)||{};
    const d=S.drivers.find(d=>d.id===x.conductor_id)||{};
    const obs=String(x.observacion_general||'Sin observaciones registradas.');
-   const approved=String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI';
+   const approved=String(x.estado||'').toUpperCase()==='APROBADO'||String(x.aprobacion_directa||'').toUpperCase()==='SI'||String(x.aprobacion_automatica||'').toUpperCase()==='SI';
+   const needsDecision=String(x.requiere_decision||'').toUpperCase()==='SI'||String(x.estado||'').toUpperCase()==='PENDIENTE_DECISION';
    return `<article class="checkin-card ${cls}">
      <div class="checkin-card-head">
        <div class="checkin-vehicle">
@@ -964,7 +965,7 @@ async function loadCheckin(){
        ${permissionAllowed('FALLAS','REPORTAR')?`<button class="mini checkin-fault" data-checkin-create-failure="${esc(x.id)}">⚠ Informar falla</button>`:''}
        ${permissionAllowed('MANTENCIONES','CREAR')?`<button class="mini checkin-maintenance" data-checkin-create-maintenance="${esc(x.id)}">🔧 Programar mantención</button>`:''}
        ${permissionAllowed('CHECKIN','EDITAR')?`<button class="mini edit" data-edit-form="checkin" data-id="${esc(x.id)}">✎ Editar</button>`:''}
-       ${permissionAllowed('CHECKIN','APROBAR_DIRECTO')&&!approved?`<button class="mini approve" data-approve-checkin="${esc(x.id)}">✓ Aprobar directo</button>`:''}
+       ${permissionAllowed('CHECKIN','APROBAR_DIRECTO')&&needsDecision?`<button class="mini approve" data-approve-checkin="${esc(x.id)}">✓ Aprobar decisión</button>`:''}
        ${permissionAllowed('CHECKIN','ELIMINAR')?`<button class="mini danger" data-delete-form="checkin" data-id="${esc(x.id)}">Eliminar</button>`:''}
      </div>
    </article>`;
@@ -1012,10 +1013,13 @@ function setOfflineCheckinQueue(rows){localStorage.setItem('efm_checkin_offline_
 function queueOfflineCheckin(payload){const q=offlineCheckinQueue();q.push({...payload,queuedAt:new Date().toISOString(),attempts:0});setOfflineCheckinQueue(q);return q.length}
 async function persistCheckinPayload(payload){
  const {id,veh,driver,km,result,items,observation}=payload;
- const checkinRow={id,vehiculo_id:veh,conductor_id:driver,kilometraje:km,estado:'FINALIZADO',resultado_tecnico:result,autorizado_operar:result==='NO APTO'?'NO':'SI',observacion_general:observation,fecha_inicio:payload.fecha_inicio,fecha_termino:new Date().toISOString(),odometro_fuente:payload.odometro_fuente||'MANUAL',evidencia_pendiente:payload.evidencia_pendiente||'NO',sincronizacion_estado:'SINCRONIZADO',advertencias:payload.advertencias||[]};
+ const hasDetail=items.some(x=>String(x.estado||'').toUpperCase()!=='CONFORME');
+ const autoApproved=items.length>=18&&!hasDetail;
+ const photoCount=Number(payload.evidencias_fotograficas||0);
+ const checkinRow={id,vehiculo_id:veh,conductor_id:driver,kilometraje:km,estado:autoApproved?'APROBADO':'PENDIENTE_DECISION',resultado_tecnico:result,autorizado_operar:autoApproved?'SI':(result==='NO APTO'?'NO':'PENDIENTE'),aprobacion_automatica:autoApproved?'SI':'NO',requiere_decision:autoApproved?'NO':'SI',decision_estado:autoApproved?'APROBADO':'PENDIENTE',evidencias_fotograficas:photoCount,sin_evidencia_fotografica:photoCount===0?'SI':'NO',observacion_general:observation,fecha_inicio:payload.fecha_inicio,fecha_termino:new Date().toISOString(),odometro_fuente:payload.odometro_fuente||'MANUAL',evidencia_pendiente:payload.evidencia_pendiente||'NO',sincronizacion_estado:'SINCRONIZADO',advertencias:payload.advertencias||[]};
  const itemRows=items.map(item=>({id:item.id||'CHI-'+crypto.randomUUID().toUpperCase(),checkin_id:id,codigo:item.codigo,nombre:item.nombre,categoria:'CHECKIN_TECNICO',estado:item.estado,criticidad:item.criticidad,observacion:item.observacion||null,detectado_por:'HUMANO'}));
  try{
-   const bulk=await api('GUARDAR_CHECKLIST_COMPLETO',{checkin:checkinRow,items:itemRows,crear_fallas:'SI'},true);
+   const bulk=await api('GUARDAR_CHECKLIST_COMPLETO',{checkin:checkinRow,items:itemRows,crear_fallas:'SI',evidencias_fotograficas:photoCount},true);
    return{saved:{row:bulk.row||checkinRow},failureRows:(bulk.fallas||[]).map(row=>({codigo:row.codigo_checklist||'',row}))};
  }catch(e){
    if(!['ACCION_NO_DISPONIBLE','RECURSO_NO_DISPONIBLE'].includes(String(e.message||'').toUpperCase()))throw e;
@@ -1042,7 +1046,7 @@ async function saveCheckin(){
   const veh=$('ciVehicle').value,driver=$('ciDriver').value||null,km=Number($('ciKm').value||0);if(!S.checkinQrValidated||!S.checkinQrVehicleId)throw new Error('QR_REQUERIDO_ANTES_CHECKLIST');if(String(veh)!==String(S.checkinQrVehicleId))throw new Error('VEHICULO_NO_COINCIDE_QR');if(!veh)throw new Error('VEHICULO_REQUERIDO');if(!km)throw new Error('KILOMETRAJE_REQUERIDO');
   if($('ciKmStatus')){$('ciKmStatus').textContent='KM confirmado ✓';$('ciKmStatus').classList.add('ok')}
   const id='CHK-'+crypto.randomUUID().toUpperCase(),result=calcResult(),items=checkinItemSnapshot(),observation=$('ciObs').value;
-  const missingEvidence=missingGuidedEvidence();const payload={id,veh,driver,km,result,items,observation,fecha_inicio:new Date().toISOString(),odometro_fuente:'MANUAL',evidencia_pendiente:missingEvidence.length?'SI':'NO',advertencias:missingEvidence.length?[`Evidencia fotográfica guiada pendiente: ${missingEvidence.join(', ')}`]:[]};
+  const missingEvidence=missingGuidedEvidence(),photoCount=guidedEvidenceEntries().filter(x=>x.file&&String(x.file.type||'').startsWith('image/')).length+[...($('ciEvidenceFiles')?.files||[])].filter(f=>String(f.type||'').startsWith('image/')).length;const payload={id,veh,driver,km,result,items,observation,fecha_inicio:new Date().toISOString(),odometro_fuente:'MANUAL',evidencias_fotograficas:photoCount,evidencia_pendiente:missingEvidence.length?'SI':'NO',advertencias:missingEvidence.length?[`Evidencia fotográfica guiada pendiente: ${missingEvidence.join(', ')}`]:[]};
   let saved,failureRows=[],offline=false;
   try{const r=await persistCheckinPayload(payload);saved=r.saved;failureRows=r.failureRows}
   catch(e){
@@ -1060,7 +1064,10 @@ async function saveCheckin(){
   S.lastCheckinSaved=checkinSourceFromRow(saved.row||{id,vehiculo_id:veh,conductor_id:driver,kilometraje:km,resultado_tecnico:result,observacion_general:observation},{failedItems:items,failureRows});
   S.lastCheckinSaved.offline=offline;updateCheckinActionHub();
   if(offline)toast('✓ KM confirmado · Checklist completo · sincronización pendiente');
-  else toast(`Checklist guardado${result==='NO APTO'?' · vehículo NO APTO':''} · acciones habilitadas · evidencias en segundo plano`);
+  else{
+    const hasDetail=items.some(x=>String(x.estado||'').toUpperCase()!=='CONFORME');
+    toast(hasDetail?'Checklist finalizado · PENDIENTE DE DECISIÓN':'Checklist finalizado y APROBADO automáticamente · no requiere aprobación manual');
+  }
   if(!offline)loadCheckin().catch(e=>console.warn('[checkin][refresco segundo plano]',e));
  }catch(e){toast('No se pudo guardar: '+friendlyError(e.message),true)}finally{loading(b,false)}
 }
@@ -1510,6 +1517,15 @@ async function saveAssignment(){
  try{await api('guardar',{recurso:'ASIGNACIONES',row:{id:activeRecord?.id,vehiculo_id:$('asgVehicle').value,conductor_id:$('asgDriver').value,estado:$('asgState').value,observaciones:$('asgObs').value}},true);
  closeModal();toast('Asignación guardada y notificación emitida');await loadAssignments();await loadNotifications(false)}catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
 }
+function speakAssignmentEmergency(n){
+ try{
+   if(!n?.id||S.lastAssignmentVoiceId===n.id||!('speechSynthesis' in window))return;
+   S.lastAssignmentVoiceId=n.id;
+   window.speechSynthesis.cancel();
+   const msg=new SpeechSynthesisUtterance(`E-Fleet. Vehículo asignado. ${n.mensaje||'Tienes un vehículo asignado. Debes aceptar y validar el QR para realizar el Checklist.'}`);
+   msg.lang='es-CL';msg.rate=0.96;msg.pitch=1;window.speechSynthesis.speak(msg);
+ }catch(e){console.warn('[asignacion][voz]',e)}
+}
 function checkAssignmentEmergency(){
  const n=(S.notifications||[]).find(n=>{
    const category=String(n.categoria||'').toUpperCase(),entity=String(n.entidad_tipo||'').toUpperCase();
@@ -1524,12 +1540,21 @@ function checkAssignmentEmergency(){
    return;
  }
  S.pendingAssignment=n;
- $('assignmentEmergencyText').textContent=n.mensaje||'Tienes un vehículo nuevo asignado.';
+ $('assignmentEmergencyText').textContent=n.mensaje||'Tienes un vehículo nuevo asignado. Acepta para validar el QR y comenzar el Checklist.';
  if($('assignmentEmergency')?.classList.contains('hidden'))openOverlay('assignmentEmergency');
+ speakAssignmentEmergency(n);
 }
 async function acceptPendingAssignment(){
  const n=S.pendingAssignment;if(!n)return;const btn=$('btnAssignmentAccept');loading(btn,true);
- try{await api('ACEPTAR_ASIGNACION',{id:n.entidad_id},true);$('assignmentEmergency').classList.add('hidden');S.pendingAssignment=null;toast('Vehículo aceptado');await loadNotifications(false)}catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
+ try{
+   const r=await api('ACEPTAR_ASIGNACION',{id:n.entidad_id},true);
+   $('assignmentEmergency').classList.add('hidden');S.pendingAssignment=null;
+   try{window.speechSynthesis?.cancel()}catch{}
+   toast('Asignación ACEPTADA · valida ahora el QR del vehículo');
+   await loadNotifications(false);
+   showView('checkin');
+   setTimeout(()=>openQrScanner().catch?.(()=>{}),450);
+ }catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
 }
 
 function notificationIcon(n){
@@ -2124,7 +2149,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('btnProfilePhoto').onclick=()=> $('profileFile').click();
  $('btnNewDocument').onclick=()=>openDocumentForm();
  $('btnNewAssignment').onclick=()=>openAssignmentForm();
- $('btnAssignmentLater').onclick=()=> $('assignmentEmergency').classList.add('hidden');
+ $('btnAssignmentLater').onclick=()=>{try{window.speechSynthesis?.cancel()}catch{};toast('Voz silenciada · la asignación continúa pendiente de aceptación')};
  $('btnAssignmentAccept').onclick=acceptPendingAssignment;
 
  $('btnNotifications').onclick=openNotifications;syncHeaderBackButton();$('pageBackButton')&&($('pageBackButton').onclick=goBackView);$('notificationClose').onclick=closeNotifications;$('notificationDetailClose').onclick=closeNotificationDetail;$('notificationDetailDone').onclick=closeNotificationDetail;$('notificationDetailModal').addEventListener('click',e=>{if(e.target===$('notificationDetailModal'))closeNotificationDetail()});document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&document.activeElement?.dataset?.notificationOpen){e.preventDefault();openNotificationDetail(document.activeElement.dataset.notificationOpen)}if((e.key==='Enter'||e.key===' ')&&document.activeElement?.dataset?.notificationKpi){e.preventDefault();S.notificationPageFilter=document.activeElement.dataset.notificationKpi||'';clearNotificationInlineDetail();renderNotificationPage();}});$('notificationRefresh').onclick=()=>runManualSyncTask('Actualizando notificaciones…',()=>loadNotifications(true),'Notificaciones actualizadas').catch(()=>{});$('notificationMarkAll').onclick=markAllNotifications;$('pageBackButton')&&( $('pageBackButton').onclick=handleNotificationBack );$('notificationPageInlineBack')&&($('notificationPageInlineBack').onclick=handleNotificationBack);
