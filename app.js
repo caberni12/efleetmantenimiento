@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.58';
+const WEB_VERSION='1.8.59';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
@@ -1483,7 +1483,7 @@ function renderAssignments(){
    <div class="assignment-top"><div><span class="assignment-eyebrow">VEHÍCULO ASIGNADO</span><div class="assignment-plate">🚙 ${esc(plate)}</div><div class="assignment-vehicle-desc">${esc(vehicleDesc)}</div></div><span class="assignment-status ${accepted?'accepted':''}">${esc(a.estado||'PENDIENTE')}</span></div>
    <div class="assignment-person"><span class="assignment-person-icon">👤</span><div><small>Usuario asignado</small><strong>${esc(assignedUser)}</strong>${driver&&driver!==assignedUser?`<span>Conductor: ${esc(driver)}</span>`:''}${assignedBy?`<span>Asignado por: ${esc(assignedBy)}</span>`:''}</div></div>
    <div class="assignment-meta">${date?`<span>📅 ${esc(date)}</span>`:''}${a.observaciones?`<span>📝 ${esc(a.observaciones)}</span>`:''}</div>
-   ${(qrAllowed||permissionAllowed('ASIGNACIONES','EDITAR')||permissionAllowed('ASIGNACIONES','ELIMINAR'))?`<div class="card-actions">${qrAllowed?`<button class="mini detail assignment-qr-button" data-assignment-qr="${esc(a.id)}" title="Generar QR para imprimir" aria-label="Generar QR para imprimir">▦ QR</button>`:''}${permissionAllowed('ASIGNACIONES','EDITAR')?`<button class="mini edit" data-assignment-edit="${esc(a.id)}">✎ Editar</button>`:''}${permissionAllowed('ASIGNACIONES','ELIMINAR')?`<button class="mini danger" data-assignment-delete="${esc(a.id)}">Eliminar</button>`:''}</div>`:''}
+   <div class="card-actions assignment-actions"><button class="mini detail assignment-trace-button" data-assignment-trace="${esc(a.id)}">↺ Trazabilidad</button>${qrAllowed?`<button class="mini detail assignment-qr-button" data-assignment-qr="${esc(a.id)}" title="Generar QR para imprimir" aria-label="Generar QR para imprimir">▦ QR</button>`:''}${permissionAllowed('ASIGNACIONES','EDITAR')?`<button class="mini edit" data-assignment-edit="${esc(a.id)}">✎ Editar</button>`:''}${permissionAllowed('ASIGNACIONES','ELIMINAR')?`<button class="mini danger" data-assignment-delete="${esc(a.id)}">Eliminar</button>`:''}</div>
   </article>`
  }).join(''):'<div class="notification-empty">No hay asignaciones para los filtros seleccionados.</div>'
 }
@@ -1869,6 +1869,19 @@ async function openAssignmentDetail(id){
  if(!a)return toast('Asignación no encontrada',true);
  $('modalTitle').textContent='Detalle de asignación';$('modal').querySelector('.modal-card').classList.add('wide-modal');$('modalSave').classList.add('hidden');$('modalCancel').textContent='Cerrar';$('modalBody').innerHTML=`<div class="life-identity"><span class="life-icon">🚙</span><div><span class="profile-label">ASIGNACIÓN</span><h3>${esc(a.vehiculo_patente||vehicleName(a.vehiculo_id))}</h3><p>👤 ${esc(a.conductor_nombre||driverName(a.conductor_id)||'Conductor asociado')}</p></div></div><div class="fault-detail-grid"><div><small>ESTADO</small><strong>${esc(a.estado||'PENDIENTE')}</strong></div><div><small>ASIGNADA</small><strong>${esc(a.fecha_asignacion?new Date(a.fecha_asignacion).toLocaleString('es-CL'):'—')}</strong></div><div><small>ACEPTADA</small><strong>${esc(a.fecha_aceptacion?new Date(a.fecha_aceptacion).toLocaleString('es-CL'):'—')}</strong></div><div><small>FIN</small><strong>${esc(a.fecha_fin?new Date(a.fecha_fin).toLocaleString('es-CL'):'—')}</strong></div></div><div class="card-actions"><button class="mini detail" data-life-vehicle="${esc(a.vehiculo_id)}">Hoja de vida vehículo</button>${a.conductor_id?`<button class="mini detail" data-life-driver="${esc(a.conductor_id)}">Hoja de vida conductor</button>`:''}</div>`;openOverlay('modal');
 }
+
+function formatElapsedSeconds(value){const sec=Number(value);if(!Number.isFinite(sec)||sec<0)return '—';const d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60),ss=Math.floor(sec%60);return [d?`${d} d`:null,h?`${h} h`:null,m?`${m} min`:null,(!d&&!h&&m===0)?`${ss} s`:null].filter(Boolean).join(' ')||'0 min'}
+async function openAssignmentTrace(id){
+ id=String(id||'').trim();if(!id)return;
+ $('modalTitle').textContent='Trazabilidad de asignación';$('modal').querySelector('.modal-card').classList.add('wide-modal');$('modalSave').classList.add('hidden');$('modalCancel').textContent='Cerrar';$('modalBody').innerHTML='<div class="notification-empty">Cargando línea de tiempo…</div>';openOverlay('modal');
+ try{
+  const j=await api('TRAZABILIDAD_ASIGNACION',{id},true),a=j.asignacion||{},r=j.resumen||{},rows=j.rows||[];
+  $('modalTitle').textContent=`Trazabilidad · ${a.vehiculo_patente||vehicleName(a.vehiculo_id)||'Asignación'}`;
+  $('modalBody').innerHTML=`<div class="life-identity"><span class="life-icon">↺</span><div><span class="profile-label">LÍNEA DE TIEMPO</span><h3>${esc(a.vehiculo_patente||vehicleName(a.vehiculo_id)||'Vehículo')}</h3><p>👤 ${esc(a.conductor_nombre||driverName(a.conductor_id)||'Conductor asociado')} · ${esc(a.estado||'')}</p></div></div>
+   <div class="fault-detail-grid assignment-trace-summary"><div><small>ASIGNACIÓN</small><strong>${esc(r.fecha_asignacion?new Date(r.fecha_asignacion).toLocaleString('es-CL'):'—')}</strong></div><div><small>ACEPTACIÓN</small><strong>${esc(r.fecha_aceptacion?new Date(r.fecha_aceptacion).toLocaleString('es-CL'):'Pendiente')}</strong></div><div><small>HASTA ACEPTAR</small><strong>${esc(formatElapsedSeconds(r.segundos_hasta_aceptacion))}</strong></div><div><small>INICIO CHECKLIST</small><strong>${esc(r.primer_checklist_inicio?new Date(r.primer_checklist_inicio).toLocaleString('es-CL'):'Pendiente')}</strong></div><div><small>CHECKLIST FINALIZADOS</small><strong>${Number(r.checklists_finalizados||0)} / ${Number(r.checklists||0)}</strong></div><div><small>TIEMPO TOTAL</small><strong>${esc(formatElapsedSeconds(r.segundos_total))}</strong></div></div>
+   <div class="checkin-trace-detail assignment-trace"><h4>Línea de tiempo de la asignación</h4>${rows.length?rows.map((x,i)=>`<article class="timeline-item assignment-timeline-item"><div class="timeline-dot ${/FIN|CIERRE|ACEPT/.test(String(x.tipo||'').toUpperCase())?'ok':/CANCEL|ANUL|ELIM/.test(String(x.tipo||'').toUpperCase())?'danger':'warn'}"></div><div class="timeline-date">${esc(x.fecha_hora?new Date(x.fecha_hora).toLocaleString('es-CL'):'')}</div><div class="timeline-card"><div class="timeline-head"><div><span class="badge">${esc(x.tipo||'EVENTO')}</span><h4>${i+1}. ${esc(x.titulo||'Evento')}</h4></div></div><p>${esc(x.detalle||'')}</p><small>Responsable: ${esc(x.usuario_nombre||'Sistema')}</small>${x.entidad_tipo==='CHECKIN'&&x.entidad_id?`<div class="timeline-link-hint">Checklist ${esc(x.entidad_id)}</div>`:''}</div></article>`).join(''):'<div class="notification-empty">Todavía no hay eventos registrados para esta asignación.</div>'}</div>`;
+ }catch(e){$('modalBody').innerHTML=`<div class="notification-empty">No fue posible cargar la trazabilidad.<br><small>${esc(friendlyError(e.message||'TRAZABILIDAD_NO_DISPONIBLE'))}</small></div>`;}
+}
 async function openCheckinById(id){
  id=String(id||'').trim();let row=(S.rows.CHECKINS||S.checkinHistory||[]).find(x=>String(x.id)===id);if(!row){try{const j=await api('listar',{recurso:'CHECKINS',id,limit:1});row=j.rows?.[0];if(row){S.rows.CHECKINS=S.rows.CHECKINS||[];S.rows.CHECKINS.push(row)}}catch(e){return toast('Checklist: '+friendlyError(e.message),true)}}if(!row)return toast('Checklist no encontrado',true);openCheckinDetail(id);
 }
@@ -2029,7 +2042,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    if(a.dataset?.dashboardDetail){e.preventDefault();openDashboardDetail(a.dataset.dashboardDetail);return;}
    if(a.dataset?.maintenanceOpen){e.preventDefault();openMaintenanceDetail(a.dataset.maintenanceOpen);return;}
    if(a.dataset?.documentDetail){e.preventDefault();openDocumentDetail(a.dataset.documentDetail);return;}
-   if(a.dataset?.assignmentDetail){e.preventDefault();openAssignmentDetail(a.dataset.assignmentDetail);return;}
+   if(a.dataset?.assignmentTrace){e.preventDefault();openAssignmentTrace(a.dataset.assignmentTrace);return;}if(a.dataset?.assignmentDetail){e.preventDefault();openAssignmentDetail(a.dataset.assignmentDetail);return;}
    if(a.dataset?.checkinOpen){e.preventDefault();openCheckinById(a.dataset.checkinOpen);return;}
  });
  document.querySelectorAll('[data-back]').forEach(x=>x.onclick=()=>clearConnection(false));
@@ -2057,7 +2070,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const dashboardDetail=e.target.closest('[data-dashboard-detail]');if(dashboardDetail){openDashboardDetail(dashboardDetail.dataset.dashboardDetail);return;}
    const maintenanceOpen=e.target.closest('[data-maintenance-open]');if(maintenanceOpen&&!e.target.closest('[data-edit-form],[data-delete-form]')){openMaintenanceDetail(maintenanceOpen.dataset.maintenanceOpen);return;}
    const documentDetail=e.target.closest('[data-document-detail]');if(documentDetail&&!e.target.closest('[data-doc-view],[data-doc-edit],[data-doc-delete]')){openDocumentDetail(documentDetail.dataset.documentDetail);return;}
-   const assignmentDetail=e.target.closest('[data-assignment-detail]');if(assignmentDetail&&!e.target.closest('[data-assignment-edit],[data-assignment-delete],[data-assignment-qr]')){openAssignmentDetail(assignmentDetail.dataset.assignmentDetail);return;}
+   const assignmentDetail=e.target.closest('[data-assignment-detail]');if(assignmentDetail&&!e.target.closest('[data-assignment-edit],[data-assignment-delete],[data-assignment-qr],[data-assignment-trace]')){openAssignmentDetail(assignmentDetail.dataset.assignmentDetail);return;}
    const checkinOpen=e.target.closest('[data-checkin-open]');if(checkinOpen&&!e.target.closest('[data-checkin-detail],[data-checkin-pdf]')){openCheckinById(checkinOpen.dataset.checkinOpen);return;}
    const driverDocAdd=e.target.closest('[data-driver-doc-add]');if(driverDocAdd){closeModal();openDocumentForm(null,{tipo_entidad:'CONDUCTOR',conductor_id:driverDocAdd.dataset.driverDocAdd,tipo_documento:driverDocAdd.dataset.docKind});return;}
    const faultOpen=e.target.closest('[data-fault-open]');if(faultOpen&&!e.target.closest('[data-edit-form],[data-delete-form]')){openFaultDetail(faultOpen.dataset.faultOpen);return;}
@@ -2079,6 +2092,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const dv=e.target.closest('[data-doc-view]');if(dv){viewDocument(dv.dataset.docView,dv);return;}
    const de=e.target.closest('[data-doc-edit]');if(de){openDocumentForm(S.documents.find(x=>String(x.id)===String(de.dataset.docEdit)));return;}
    const dd=e.target.closest('[data-doc-delete]');if(dd){deleteDocument(dd.dataset.docDelete,dd);return;}
+   const at=e.target.closest('[data-assignment-trace]');if(at){openAssignmentTrace(at.dataset.assignmentTrace);return;}
    const aq=e.target.closest('[data-assignment-qr]');if(aq){openAssignmentQr(aq.dataset.assignmentQr);return;}
    const ae=e.target.closest('[data-assignment-edit]');if(ae){openAssignmentForm(S.assignments.find(x=>String(x.id)===String(ae.dataset.assignmentEdit)));return;}
    const ad=e.target.closest('[data-assignment-delete]');if(ad){deleteRecord('asignacion',ad.dataset.assignmentDelete);return;}
