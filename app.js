@@ -93,7 +93,7 @@ function toast(msg,error=false){
  const textNode=document.createElement('span');textNode.className='toast-message';textNode.textContent=String(msg||'');
  n.append(icon,textNode);$('toast').append(n);setTimeout(()=>n.remove(),4200)
 }
-function friendlyError(message){const raw=String(message||'ERROR');return({CHECKIN_YA_GUARDADO_USA_NUEVA_INSPECCION:'Este Checklist ya fue guardado. Usa “Nueva inspección” para iniciar otro.',KILOMETRAJE_REQUERIDO:'Ingresa el kilometraje actual del vehículo.',VEHICULO_REQUERIDO:'Selecciona una tarjeta de vehículo.',SOLO_CONDUCTOR_O_SUPERVISOR_GEO_PUEDE_ASOCIARSE:'Solo una cuenta Conductor o Supervisor geográfico puede asociarse a un conductor.',CONDUCTOR_ASOCIADO_NO_ENCONTRADO:'El conductor seleccionado ya no está disponible.',PERMISO_DENEGADO:'La cuenta no tiene permiso para esta acción. Si eres Administrador, despliega la API incluida en este paquete.',VEHICULO_NO_DISPONIBLE_PARA_CHECKLIST:'El vehículo asignado no está disponible para iniciar el Checklist.'})[raw]||raw}
+function friendlyError(message){const raw=String(message||'ERROR');return({CHECKIN_YA_GUARDADO_USA_NUEVA_INSPECCION:'Este Checklist ya fue guardado. Usa “Nueva inspección” para iniciar otro.',KILOMETRAJE_REQUERIDO:'Ingresa el kilometraje actual del vehículo.',VEHICULO_REQUERIDO:'Selecciona una tarjeta de vehículo.',SOLO_CONDUCTOR_O_SUPERVISOR_GEO_PUEDE_ASOCIARSE:'Solo una cuenta Conductor o Supervisor geográfico puede asociarse a un conductor.',CONDUCTOR_ASOCIADO_NO_ENCONTRADO:'El conductor seleccionado ya no está disponible.',PERMISO_DENEGADO:'La cuenta no tiene permiso para esta acción. Si eres Administrador, despliega la API incluida en este paquete.',VEHICULO_NO_DISPONIBLE_PARA_CHECKLIST:'El vehículo asignado no está disponible para iniciar el Checklist.',ASIGNACION_YA_NO_VIGENTE:'Esta asignación ya no está vigente.',ASIGNACION_NO_ENCONTRADA:'Esta asignación ya no está disponible.'})[raw]||raw}
 function loading(btn,on){
  if(!btn)return;
  if(on){btn.dataset.busy='1';setButtonFeedback(btn,'loading')}
@@ -1515,7 +1515,7 @@ async function openAssignmentForm(record=null){
 async function saveAssignment(){
  const btn=$('modalSave');loading(btn,true);
  try{await api('guardar',{recurso:'ASIGNACIONES',row:{id:activeRecord?.id,vehiculo_id:$('asgVehicle').value,conductor_id:$('asgDriver').value,estado:$('asgState').value,observaciones:$('asgObs').value}},true);
- closeModal();toast('Asignación guardada y notificación emitida');await loadAssignments();await loadNotifications(false)}catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
+ closeModal();toast('Asignación guardada y notificación emitida');await loadAssignments();await loadNotifications(false)}catch(e){toast('No se pudo guardar: '+friendlyError(e.message),true)}finally{loading(btn,false)}
 }
 function assignmentEmergencyKind(n){
  const category=String(n?.categoria||'').toUpperCase(),title=String(n?.titulo||'').toUpperCase();
@@ -1575,14 +1575,22 @@ async function acceptPendingAssignment(){
      await loadAssignments().catch(()=>{});
      return;
    }
-   const r=await api('ACEPTAR_ASIGNACION',{id:n.entidad_id},true);
+   const r=await api('ACEPTAR_ASIGNACION',{id:n.entidad_id,notification_id:n.id},true);
    $('assignmentEmergency').classList.add('hidden');S.pendingAssignment=null;
    try{window.speechSynthesis?.cancel()}catch{}
    toast('Asignación ACEPTADA · valida ahora el QR del vehículo');
    await loadNotifications(false);
    showView('checkin');
    setTimeout(()=>openQrScanner().catch?.(()=>{}),450);
- }catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
+ }catch(e){
+   const code=String(e?.message||'');
+   if(code==='ASIGNACION_YA_NO_VIGENTE'||code==='ASIGNACION_NO_ENCONTRADA'){
+     $('assignmentEmergency').classList.add('hidden');S.pendingAssignment=null;
+     try{window.speechSynthesis?.cancel()}catch{}
+     toast('Esta asignación ya no está vigente. La alerta fue retirada.');
+     await Promise.all([loadNotifications(false).catch(()=>{}),loadAssignments().catch(()=>{})]);
+   }else toast('Asignación: '+friendlyError(code),true);
+ }finally{loading(btn,false)}
 }
 
 function notificationIcon(n){
