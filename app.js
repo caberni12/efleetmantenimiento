@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.46';
+const WEB_VERSION='1.8.58';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
@@ -331,7 +331,7 @@ function liveSyncEditing(){
 function liveSyncViewImpacted(view,resources){
  const map={
   dashboard:['VEHICULOS','CONDUCTORES','ASIGNACIONES','CHECKINS','CHECKIN_ITEMS','FALLAS','MANTENCIONES','ORDENES_TRABAJO','COMBUSTIBLE','COSTOS','SALUD_VEHICULO','PREDICCIONES','DOCUMENTOS'],
-  empresa:['EMPRESA'],perfiles:['PERFILES','USUARIOS'],usuarios:['USUARIOS','PERFILES'],
+  empresa:['EMPRESA'],perfiles:['PERFILES','USUARIOS','ASIGNACIONES','CONDUCTORES','VEHICULOS'],usuarios:['USUARIOS','PERFILES'],
   vehiculos:['VEHICULOS','ASIGNACIONES','CHECKINS','FALLAS','MANTENCIONES','ORDENES_TRABAJO','COMBUSTIBLE','DOCUMENTOS','SALUD_VEHICULO'],
   conductores:['CONDUCTORES','ASIGNACIONES','CHECKINS','DOCUMENTOS'],asignaciones:['ASIGNACIONES','VEHICULOS','CONDUCTORES'],
   documentos:['DOCUMENTOS','DOCUMENTOS_HISTORIAL','VEHICULOS','CONDUCTORES'],
@@ -366,9 +366,12 @@ async function pollNotificationBadgeSilent(){
  if(!S.token)return;const seq=nextNotificationRequestSeq();
  const j=await api('NOTIFICACIONES_PULSO',{sync_cursor:Number(S.liveSyncCursor||0)},true);
  const unread=Number(j.noLeidas||0),previous=Number(S.lastUnread||0);if(!applyNotificationBadgeSnapshot(unread,seq,Boolean(j.criticasPendientes)))return;
- const cambios=j.cambios||{};if(cambios.habilitado){S.liveSyncCursor=Number(cambios.cursor||S.liveSyncCursor||0);if(!cambios.inicial)await applyLiveSyncResources(cambios.recursos||[])}
+ const cambios=j.cambios||{},changedResources=(cambios.recursos||[]).map(x=>String(x||'').toUpperCase());
+ if(cambios.habilitado){S.liveSyncCursor=Number(cambios.cursor||S.liveSyncCursor||0);if(!cambios.inicial)await applyLiveSyncResources(changedResources)}
  const centerOpen=!$('notificationCenter')?.classList.contains('hidden'),notificationView=liveSyncView()==='notificaciones';
- if((centerOpen||notificationView)&&unread!==previous)await loadNotifications(false);
+ const assignmentEmergencyOpen=!$('assignmentEmergency')?.classList.contains('hidden');
+ const assignmentChanged=changedResources.some(r=>r==='ASIGNACIONES'||r==='NOTIFICACIONES');
+ if((centerOpen||notificationView||assignmentEmergencyOpen)&&(unread!==previous||assignmentChanged))await loadNotifications(false);
 }
 async function liveSyncCurrentView(){
  const dayChanged=syncChileDayContext();
@@ -1332,6 +1335,10 @@ async function deleteRecord(formKey,id){
  if(!confirm(`¿Eliminar administrativamente "${label}"?\\n\\nEl registro quedará marcado como eliminado y la acción será auditada.`))return;
  try{
    await api('eliminar',{recurso:form.resource,id});
+   if(form.resource==='ASIGNACIONES'){
+     S.assignments=(S.assignments||[]).filter(x=>String(x.id)!==String(id));
+     renderAssignments();
+   }
    toast('Registro eliminado');await refresh(document.querySelector('#nav button.active')?.dataset.view||'dashboard');
  }catch(e){toast('No se pudo eliminar: '+e.message,true)}
 }
@@ -1504,9 +1511,21 @@ async function saveAssignment(){
  closeModal();toast('Asignación guardada y notificación emitida');await loadAssignments();await loadNotifications(false)}catch(e){toast('Asignación: '+e.message,true)}finally{loading(btn,false)}
 }
 function checkAssignmentEmergency(){
- if($('assignmentEmergency')&&!$('assignmentEmergency').classList.contains('hidden'))return;
- const n=(S.notifications||[]).find(n=>String(n.categoria||'').toUpperCase()==='ASIGNACION'&&String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'&&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE');
- if(!n)return;S.pendingAssignment=n;$('assignmentEmergencyText').textContent=n.mensaje||'Tienes un vehículo nuevo asignado.';openOverlay('assignmentEmergency');
+ const n=(S.notifications||[]).find(n=>{
+   const category=String(n.categoria||'').toUpperCase(),entity=String(n.entidad_tipo||'').toUpperCase();
+   return (category==='ASIGNACION'||category==='VEHICULO_CHECKIN_ASIGNADO'||entity==='ASIGNACION')
+     &&String(n.requiere_aceptacion||'NO').toUpperCase()==='SI'
+     &&String(n.estado_respuesta||'PENDIENTE').toUpperCase()==='PENDIENTE'
+     &&String(n.eliminado||'NO').toUpperCase()!=='SI';
+ });
+ if(!n){
+   S.pendingAssignment=null;
+   $('assignmentEmergency')?.classList.add('hidden');
+   return;
+ }
+ S.pendingAssignment=n;
+ $('assignmentEmergencyText').textContent=n.mensaje||'Tienes un vehículo nuevo asignado.';
+ if($('assignmentEmergency')?.classList.contains('hidden'))openOverlay('assignmentEmergency');
 }
 async function acceptPendingAssignment(){
  const n=S.pendingAssignment;if(!n)return;const btn=$('btnAssignmentAccept');loading(btn,true);
