@@ -2,7 +2,7 @@
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
 const WEB_VERSION='1.8.46';
-const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
+const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
  {id:'DASHBOARD',label:'Dashboard',actions:['LEER']},{id:'EMPRESA',label:'Empresa',actions:['LEER','EDITAR','LOGO']},{id:'PERFILES',label:'Perfiles',actions:['LEER','EDITAR']},
@@ -428,10 +428,10 @@ async function loadProfileView(){
 }
 
 function renderRoleProfiles(){
- const q=String($('profileSearch')?.value||'').trim().toLowerCase(),filter=normalizeRole($('profileRoleFilter')?.value||'');
+ const q=String($('profileSearch')?.value||'').trim(),filter=normalizeRole($('profileRoleFilter')?.value||'');
  let visible=isManagement()?S.roleProfiles:S.roleProfiles.filter(x=>normalizeRole(x.id)===roleId());
  if(filter)visible=visible.filter(x=>normalizeRole(x.id)===filter);
- if(q)visible=visible.filter(x=>`${x.nombre||''} ${x.descripcion||''} ${x.id||''}`.toLowerCase().includes(q));
+ if(q)visible=visible.filter(x=>searchMatch(`${x.nombre||''} ${x.descripcion||''} ${x.id||''}`,q));
  $('roleProfileCards').innerHTML=visible.length?visible.map(x=>{const modules=Object.values(x.permisos||{}),enabled=modules.reduce((n,a)=>n+Object.values(a||{}).filter(Boolean).length,0),total=modules.reduce((n,a)=>n+Object.keys(a||{}).length,0);return `<article class="role-profile-card ${x.irreductible?'admin-profile':''}"><div class="role-profile-head"><span>${esc(initials(x.nombre))}</span><div><small>PERFIL</small><h4>${esc(x.nombre)}</h4><code>${esc(x.id)}</code></div></div><p>${esc(x.descripcion||'Perfil de acceso')}</p><div class="role-profile-meter"><span style="width:${total?Math.round(enabled/total*100):0}%"></span></div><div class="role-profile-foot"><small>${enabled} de ${total} acciones habilitadas</small>${isManagement()?`<button class="mini permissions" data-role-permissions="${esc(x.id)}">${x.irreductible?'Ver matriz':'Configurar matriz'}</button>`:''}</div></article>`}).join(''):'<div class="notification-empty">No hay perfiles para este filtro.</div>';
 }
 
@@ -470,9 +470,16 @@ function advText(row){
 }
 function advBar(module){return document.querySelector(`.advanced-filter-bar[data-filter-module="${module}"]`)}
 function advControl(module,selector){return advBar(module)?.querySelector(selector)||null}
+function searchNormalize(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9k@]+/g,' ').replace(/\s+/g,' ').trim()}
+function searchCompact(value){return searchNormalize(value).replace(/[^a-z0-9k@]/g,'')}
+function searchMatch(value,query){const qNorm=searchNormalize(query),qCompact=searchCompact(query);if(!qNorm)return true;const hayNorm=searchNormalize(value),hayCompact=searchCompact(value);return hayNorm.includes(qNorm)||Boolean(qCompact&&hayCompact.includes(qCompact))}
+
 function advancedFilteredRows(module,rows){
  const cfg=ADV_FILTERS[module]||{},bar=advBar(module);if(!bar)return rows||[];
- const q=String(bar.querySelector('[data-filter-search]')?.value||'').trim().toLowerCase();
+ const q=String(bar.querySelector('[data-filter-search]')?.value||'').trim();
+ const qNorm=searchNormalize(q),qCompact=searchCompact(q);
+ const remote=S.moduleSearch?.[module],remoteApplied=Boolean(remote&&searchNormalize(remote.query)===qNorm);
+ rows=remoteApplied?remote.rows:(rows||[]);
  const state=String(bar.querySelector('[data-filter-state]')?.value||'').toUpperCase();
  const category=String(bar.querySelector('[data-filter-category]')?.value||'').toUpperCase();
  const criticality=String(bar.querySelector('[data-filter-criticality]')?.value||'').toUpperCase();
@@ -481,7 +488,8 @@ function advancedFilteredRows(module,rows){
  const vehicle=bar.querySelector('[data-filter-extra="vehicle"]')?.value||'';
  const entity=String(bar.querySelector('[data-filter-extra="entity"]')?.value||'').toUpperCase();
  return (rows||[]).filter(row=>{
-   if(q&&!advText(row).includes(q))return false;
+   // Si la API ya resolvió la búsqueda global, no volver a descartar el resultado localmente.
+   if(q&&!remoteApplied){const hay=advText(row),hayNorm=searchNormalize(hay),hayCompact=searchCompact(hay);if(!hayNorm.includes(qNorm)&&(!qCompact||!hayCompact.includes(qCompact)))return false;}
    if(state&&String(advSpecValue(row,cfg.state)).toUpperCase()!==state)return false;
    if(category&&String(advSpecValue(row,cfg.category)).toUpperCase()!==category)return false;
    if(criticality&&String(advSpecValue(row,cfg.criticality)).toUpperCase()!==criticality)return false;
@@ -505,8 +513,18 @@ function populateAdvancedFilter(module,rows){
    sel.disabled=vals.length===0;
  }
 }
+const ADV_RESOURCE={vehiculos:'VEHICULOS',conductores:'CONDUCTORES',asignaciones:'ASIGNACIONES',documentos:'DOCUMENTOS',checkinhistorial:'CHECKINS',checkinaprobaciones:'CHECKINS',fallas:'FALLAS',mantenciones:'MANTENCIONES',ordenes:'ORDENES_TRABAJO',talleres:'TALLERES',historial:'HISTORIAL_MANTENCIONES',predicciones:'PREDICCIONES',combustible:'COMBUSTIBLE',usuarios:'USUARIOS',auditoria:'AUDITORIA'};
+async function applyAdvancedFilter(module,button=null){
+ const bar=advBar(module);if(!bar){renderAdvancedModule(module);return;}
+ const q=String(bar.querySelector('[data-filter-search]')?.value||'').trim(),resource=ADV_RESOURCE[module];
+ if(!q||!resource){if(S.moduleSearch)delete S.moduleSearch[module];renderAdvancedModule(module);return;}
+ if(button)loading(button,true);
+ try{const j=await api('listar',{recurso:resource,limit:500,buscar:q});S.moduleSearch[module]={query:q,rows:j.rows||[]};renderAdvancedModule(module)}
+ catch(e){toast(e.message||'No fue posible consultar');}
+ finally{if(button)loading(button,false)}
+}
 function clearAdvancedFilter(module){
- const bar=advBar(module);if(!bar)return;bar.querySelectorAll('input').forEach(i=>i.value='');bar.querySelectorAll('select').forEach(s=>s.value='');renderAdvancedModule(module);
+ const bar=advBar(module);if(!bar)return;if(S.moduleSearch)delete S.moduleSearch[module];bar.querySelectorAll('input').forEach(i=>i.value='');bar.querySelectorAll('select').forEach(s=>s.value='');renderAdvancedModule(module);
 }
 function renderAdvancedModule(module){
  const map={vehiculos:renderVehicles,conductores:renderDrivers,asignaciones:renderAssignments,documentos:renderDocuments,checkinhistorial:renderCheckinHistory,checkinaprobaciones:renderCheckinApprovals,fallas:renderFailures,mantenciones:renderMaintenance,ordenes:renderServiceOrders,talleres:renderWorkshops,historial:renderMaintenanceHistory,predicciones:renderPredictions,notificaciones:renderNotificationPage,combustible:renderFuelModule,usuarios:renderUsers,reportes:renderReport,auditoria:renderAudit};
@@ -515,10 +533,10 @@ function renderAdvancedModule(module){
 function wireAdvancedFilters(){
  document.querySelectorAll('.advanced-filter-bar[data-filter-module]').forEach(bar=>{
    const module=bar.dataset.filterModule;
-   bar.querySelector('[data-filter-apply]')?.addEventListener('click',()=>renderAdvancedModule(module));
+   bar.querySelector('[data-filter-apply]')?.addEventListener('click',e=>applyAdvancedFilter(module,e.currentTarget));
    bar.querySelector('[data-filter-clear]')?.addEventListener('click',()=>clearAdvancedFilter(module));
    bar.querySelector('[data-filter-refresh]')?.addEventListener('click',async e=>{const b=e.currentTarget;loading(b,true);try{await runManualSyncTask('Actualizando módulo…',()=>refresh(module),'Información actualizada')}catch(err){}finally{loading(b,false)}});
-   bar.querySelector('[data-filter-search]')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();renderAdvancedModule(module)}});
+   bar.querySelector('[data-filter-search]')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyAdvancedFilter(module,bar.querySelector('[data-filter-apply]'))}});
  });
 }
 // ===========================================================================
@@ -531,7 +549,7 @@ function renderVehicles(){
  $('vehiculosRows').innerHTML=rows.length?rows.map(x=>`<div class="card"><h4>${esc(x.patente)}</h4><p>${esc(x.marca||'')} ${esc(x.modelo||'')} ${esc(x.anio||'')}</p><p>KM: <strong>${Number(x.kilometraje||0).toLocaleString('es-CL')}</strong></p><p>VIN: ${esc(x.vin||'—')} · Combustible: ${esc(x.combustible||'—')}</p><span class="badge">${esc(x.estado||'ACTIVO')}</span><div class="life-actions"><button class="mini detail" data-life-vehicle="${esc(x.id)}">Hoja de vida</button>${permissionAllowed('MANTENCIONES','CREAR')?`<button class="mini edit" data-new-maintenance="${esc(x.id)}">+ Mantención</button>`:''}</div>${adminActions('vehiculo',x.id)}</div>`).join(''):'<p class="muted">No hay vehículos para los filtros seleccionados.</p>';
 }
 async function loadDrivers(catalogOnly=false){
- const j=await api('listar',{recurso:'CONDUCTORES',limit:300});S.drivers=j.rows||[];S.rows.CONDUCTORES=S.drivers;S.catalogLoadedAt.CONDUCTORES=Date.now();fillDriverSelect();
+ const j=await api('listar',{recurso:'CONDUCTORES',limit:500});S.drivers=j.rows||[];S.rows.CONDUCTORES=S.drivers;S.catalogLoadedAt.CONDUCTORES=Date.now();fillDriverSelect();
  if(!catalogOnly&&permissionAllowed('DOCUMENTOS','LEER')){try{const dj=await api('listar',{recurso:'DOCUMENTOS',limit:500});S.documents=dj.rows||[];S.rows.DOCUMENTOS=S.documents}catch(e){console.warn('[conductores][documentos]',e)}}
  if(!catalogOnly){populateAdvancedFilter('conductores',S.drivers);renderDrivers();}
 }
@@ -560,7 +578,7 @@ function fillVehicleSelect(){
  const input=$('ciVehicle'),box=$('ciVehicleCards');if(!input||!box)return;
  if(input.value&&!S.vehicles.some(v=>String(v.id)===String(input.value)))input.value='';
  if(!input.value&&S.vehicles.length===1)input.value=S.vehicles[0].id;
- const q=String($('ciVehicleSearch')?.value||'').trim().toLowerCase(),visible=S.vehicles.filter(v=>!q||[v.patente,v.marca,v.modelo,v.vin].some(x=>String(x||'').toLowerCase().includes(q)));
+ const q=String($('ciVehicleSearch')?.value||'').trim(),visible=S.vehicles.filter(v=>!q||searchMatch(`${v.patente||''} ${v.marca||''} ${v.modelo||''} ${v.vin||''}`,q));
  box.innerHTML=visible.length?visible.map(v=>`<button class="checkin-choice-card vehicle-card ${String(v.id)===String(input.value)?'selected':''}" type="button" data-ci-vehicle="${esc(v.id)}" aria-pressed="${String(v.id)===String(input.value)}"><span class="choice-icon">🚙</span><span><strong>${esc(v.patente||'Sin patente')}</strong><small>${esc([v.marca,v.modelo].filter(Boolean).join(' ')||'Vehículo')}</small><em>${Number(v.kilometraje||0).toLocaleString('es-CL')} km</em></span><b>✓</b></button>`).join(''):'<div class="checkin-choice-empty">No hay vehículos que coincidan con la búsqueda.</div>';
  box.querySelectorAll('[data-ci-vehicle]').forEach(b=>b.onclick=()=>selectCheckinVehicle(b.dataset.ciVehicle,true));
 }
@@ -568,7 +586,7 @@ function fillDriverSelect(){
  const input=$('ciDriver'),box=$('ciDriverCards');if(!input||!box)return;
  if(input.value&&!S.drivers.some(v=>String(v.id)===String(input.value)))input.value='';
  const noneSelected=!input.value;
- const q=String($('ciDriverSearch')?.value||'').trim().toLowerCase(),visible=S.drivers.filter(d=>!q||[d.nombre,d.rut,d.correo,d.licencia_clase].some(x=>String(x||'').toLowerCase().includes(q)));
+ const q=String($('ciDriverSearch')?.value||'').trim(),visible=S.drivers.filter(d=>!q||searchMatch(`${d.nombre||''} ${d.rut||''} ${d.correo||''} ${d.licencia_clase||''}`,q));
  box.innerHTML=`<button class="checkin-choice-card driver-card ${noneSelected?'selected':''}" type="button" data-ci-driver="" aria-pressed="${noneSelected}"><span class="choice-icon">—</span><span><strong>Sin conductor</strong><small>Inspección de la unidad</small></span><b>✓</b></button>`+visible.map(d=>`<button class="checkin-choice-card driver-card ${String(d.id)===String(input.value)?'selected':''}" type="button" data-ci-driver="${esc(d.id)}" aria-pressed="${String(d.id)===String(input.value)}"><span class="choice-icon">👤</span><span><strong>${esc(d.nombre||'Conductor')}</strong><small>${esc(d.rut||d.licencia_clase||'Registro activo')}</small></span><b>✓</b></button>`).join('');
  box.querySelectorAll('[data-ci-driver]').forEach(b=>b.onclick=()=>selectCheckinDriver(b.dataset.ciDriver||'',true));
 }
@@ -656,14 +674,14 @@ let qrState=null,qrTimer=null;
 function qrAssignVehicleText(v){return `${v.patente||'Vehículo'} · ${[v.marca,v.modelo].filter(Boolean).join(' ')}${v.vin?' · '+v.vin:''}`.trim()}
 function qrAssignDriverText(d){return `${d.nombre||'Conductor'}${d.rut?' · '+d.rut:''}${d.correo?' · '+d.correo:''}`}
 function fillQrAssignVehicleOptions(){
- const sel=$('qrAssignVehicle'),q=String($('qrAssignVehicleSearch')?.value||'').trim().toLowerCase(),keep=sel?.value||$('ciVehicle')?.value||'';if(!sel)return;
- const rows=(S.vehicles||[]).filter(v=>!q||`${v.patente||''} ${v.marca||''} ${v.modelo||''} ${v.vin||''}`.toLowerCase().includes(q));
+ const sel=$('qrAssignVehicle'),q=String($('qrAssignVehicleSearch')?.value||'').trim(),keep=sel?.value||$('ciVehicle')?.value||'';if(!sel)return;
+ const rows=(S.vehicles||[]).filter(v=>!q||searchMatch(`${v.patente||''} ${v.marca||''} ${v.modelo||''} ${v.vin||''}`,q));
  sel.innerHTML='<option value="">Selecciona vehículo</option>'+rows.map(v=>`<option value="${esc(v.id)}">${esc(qrAssignVehicleText(v))}</option>`).join('');
  if(rows.some(v=>String(v.id)===String(keep)))sel.value=keep;else if(rows.length===1)sel.value=rows[0].id;updateQrAssignSummary();
 }
 function fillQrAssignDriverOptions(){
- const sel=$('qrAssignDriver'),q=String($('qrAssignDriverSearch')?.value||'').trim().toLowerCase(),keep=sel?.value||$('ciDriver')?.value||'';if(!sel)return;
- const rows=(S.drivers||[]).filter(d=>!q||`${d.nombre||''} ${d.rut||''} ${d.correo||''}`.toLowerCase().includes(q));
+ const sel=$('qrAssignDriver'),q=String($('qrAssignDriverSearch')?.value||'').trim(),keep=sel?.value||$('ciDriver')?.value||'';if(!sel)return;
+ const rows=(S.drivers||[]).filter(d=>!q||searchMatch(`${d.nombre||''} ${d.rut||''} ${d.correo||''}`,q));
  sel.innerHTML='<option value="">Selecciona conductor</option>'+rows.map(d=>`<option value="${esc(d.id)}">${esc(qrAssignDriverText(d))}</option>`).join('');
  if(rows.some(d=>String(d.id)===String(keep)))sel.value=keep;else if(rows.length===1)sel.value=rows[0].id;updateQrAssignSummary();
 }
@@ -871,7 +889,7 @@ async function exportBudget(kind){if(!S.budgetSummary?.configurado)return toast(
 
 async function loadUsers(){
  if(!isManagement())return showView('dashboard');
- const [conductores,j]=await Promise.all([api('listar',{recurso:'CONDUCTORES',limit:300}),api('listar',{recurso:'USUARIOS',limit:300})]);S.drivers=conductores.rows||[];S.rows.CONDUCTORES=S.drivers;S.users=j.rows||[];S.rows.USUARIOS=S.users;populateAdvancedFilter('usuarios',S.users);renderUsers();
+ const [conductores,j]=await Promise.all([api('listar',{recurso:'CONDUCTORES',limit:500}),api('listar',{recurso:'USUARIOS',limit:300})]);S.drivers=conductores.rows||[];S.rows.CONDUCTORES=S.drivers;S.users=j.rows||[];S.rows.USUARIOS=S.users;populateAdvancedFilter('usuarios',S.users);renderUsers();
 }
 function filteredUsers(){return advancedFilteredRows('usuarios',S.users||[])}
 function renderUsers(){
