@@ -472,6 +472,23 @@ function renderFaultDailyTrends(rows=[],vehicles=[]){
  box.innerHTML=panel('Fallas abiertas','abiertas','pct_abiertas','open','vehiculos_abiertas')+panel('Fallas cerradas','cerradas','pct_cerradas','closed','vehiculos_cerradas');
 }
 
+async function loadDashboard(){
+ const j=await api('dashboard');const r=j.resumen||{};
+ const ks=[['Vehículos',r.vehiculos||0,'VEHICULOS','blue','🚙'],['Checklist hoy',r.checkins_hoy||0,'CHECKINS_HOY','green','📋'],['Fallas abiertas',r.fallas_abiertas||0,'FALLAS_ABIERTAS','amber','⚠️'],['Fallas críticas',r.fallas_criticas||0,'FALLAS_CRITICAS','red','🚨'],['Mantenciones',r.mantenciones_pendientes||0,'MANTENCIONES_PENDIENTES','amber','🔧'],['Costo mes','$ '+Number(r.costo_mes||0).toLocaleString('es-CL'),'COSTO_MES','teal','💰']];
+ $('kpis').innerHTML=ks.map(([a,b,action,tone,icon])=>dashboardKpi(a,b,action,tone,icon)).join('');
+ const rows=j.saludVehiculos||[];
+ const avgHealth=rows.length?Math.round(rows.reduce((a,x)=>a+Number(x.salud_porcentaje||0),0)/rows.length):0;
+ const avgRisk=rows.length?Math.round(rows.reduce((a,x)=>a+Number(x.riesgo_porcentaje||0),0)/rows.length):0;
+ const highestRisk=rows.length?[...rows].sort((a,b)=>Number(b.riesgo_porcentaje||0)-Number(a.riesgo_porcentaje||0))[0]:null;
+ const riskDetail=highestRisk?`${highestRisk.patente||highestRisk.vehiculo_patente||'Vehículo'}${[highestRisk.marca,highestRisk.modelo].filter(Boolean).length?' · '+[highestRisk.marca,highestRisk.modelo].filter(Boolean).join(' '):''} · Salud ${Math.round(Number(highestRisk.salud_porcentaje||0))}%`:'Sin salud vehicular calculada';
+ const fleet=Math.max(1,Number(r.vehiculos||rows.length||1));
+ const decisions=j.decisionKpis||[];
+ $('fleetRings').innerHTML=ringKpi('Salud de flota',`${avgHealth}%`,avgHealth,avgHealth<50?'red':avgHealth<75?'amber':'green','Promedio de unidades','SALUD_FLOTA')+ringKpi('Riesgo operacional',`${avgRisk}%`,avgRisk,avgRisk>=70?'red':avgRisk>=30?'amber':'green',riskDetail,'RIESGO_FLOTA')+ringKpi('Mantención pendiente',String(r.mantenciones_pendientes||0),Math.min(100,Number(r.mantenciones_pendientes||0)/fleet*100),Number(r.mantenciones_pendientes||0)?'amber':'green','Ligada a vehículos','MANTENCIONES_PENDIENTES')+decisions.map(x=>ringKpi(x.titulo,x.valorTexto||x.patente||'—',100,/FALLA|COSTO/.test(String(x.tipo||''))?'amber':/CONDUCTOR/.test(String(x.tipo||''))?'teal':'blue',`${x.detalle||''}${x.conductor_nombre?' · Conductor: '+x.conductor_nombre:''}${x.accion_sugerida?' · Decisión: '+x.accion_sugerida:''}`,x.vehiculo_id?`VEHICULO:${x.vehiculo_id}`:x.conductor_id?`CONDUCTOR:${x.conductor_id}`:'')).join('');
+ $('healthRows').innerHTML=rows.length?rows.map(x=>`<div class="table-row dashboard-health-clickable" data-life-vehicle="${esc(x.vehiculo_id||x.id)}" role="button" tabindex="0"><strong>${esc(x.patente||x.vehiculo_patente||'Vehículo asociado')}</strong><span>${esc(x.marca||'')} ${esc(x.modelo||'')}</span><span>Salud ${Number(x.salud_porcentaje||0).toFixed(0)}%</span><div class="health-bar"><span style="width:${Math.max(0,Math.min(100,Number(x.salud_porcentaje||0)))}%"></span></div><span>Riesgo ${Number(x.riesgo_porcentaje||0).toFixed(0)}%</span></div>`).join(''):'<p class="muted">Aún no hay indicadores de salud calculados.</p>';
+ renderFaultVehicleChart(j.fallasVehiculo||[]);
+ renderFaultDailyTrends(j.fallasDiarias||[],j.fallasVehiculo||[]);
+}
+
 function faultTrendInputDate(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
 function ensureFaultVehicleTrendModal(){
  let modal=$('faultVehicleTrendModal');if(modal)return modal;
