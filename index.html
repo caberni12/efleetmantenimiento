@@ -168,6 +168,11 @@
         <div class="panel-head"><h3>Salud de la flota</h3></div>
         <div id="healthRows"></div>
       </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3>Fallas por vehículo y conductor</h3><p class="muted">Comparación visual entre las unidades con más y menos fallas registradas.</p></div></div>
+        <div id="faultVehicleSummary" class="fault-vehicle-summary"></div>
+        <div id="faultVehicleChart" class="fault-vehicle-chart"></div>
+      </div>
     </section>
 
     <section id="view-empresa" class="view">
@@ -501,6 +506,7 @@
     <section id="view-talleres" class="view">
       <div class="module-hero"><div><span class="hero-icon">🏭</span><div><span class="module-eyebrow">RED DE SERVICIO</span><h3>Talleres</h3><p>Escribe la dirección en texto; E-Fleet obtiene automáticamente la ubicación y las coordenadas, además de teléfono y calidad histórica.</p></div></div><div class="hero-actions"><button class="primary" data-open-form="taller">+ Taller</button></div></div>
       <div id="workshopKpis" class="ring-kpi-grid compact"></div>
+      <div id="workshopQualityChart" class="workshop-quality-chart"></div>
       <div class="advanced-filter-bar" data-filter-module="talleres">
         <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Nombre, especialidad, dirección, comuna o contacto"></label>
         
@@ -609,7 +615,7 @@
 
     <section id="view-reportes" class="view">
       <div class="module-hero"><div><span class="hero-icon">📊</span><div><span class="module-eyebrow">INFORMES Y ANÁLISIS</span><h3>Reportes PDF / XLSX</h3><p>Exporta información de Checklist, mantenciones, fallas, talleres, vehículos, combustible y usuarios.</p></div></div><div class="hero-actions"><button id="btnReportPdf" class="ghost pdf-icon-button" title="Descargar PDF" aria-label="Descargar PDF">📄</button><button id="btnReportXlsx" class="ghost excel-icon-button" type="button" title="Descargar Excel" aria-label="Descargar Excel"><span class="excel-icon" aria-hidden="true">X</span></button></div></div>
-      <div class="panel report-selector"><label>Informe</label><select id="reportType"><option value="CHECKINS">Checklist</option><option value="MANTENCIONES">Mantenciones</option><option value="ORDENES_TRABAJO">Órdenes de servicio</option><option value="FALLAS">Fallas</option><option value="TALLERES">Talleres</option><option value="VEHICULOS">Vehículos</option><option value="COMBUSTIBLE">Combustible</option><option value="DOCUMENTOS">Documentos</option><option value="PREDICCIONES">Análisis predictivo</option><option value="USUARIOS">Usuarios</option><option value="PRESUPUESTO_OPERACIONAL">Presupuesto Operacional</option></select><button id="btnReportRefresh" class="ghost">↻ Actualizar informe</button></div>
+      <div class="panel report-selector"><label>Informe</label><select id="reportType"><option value="CHECKINS">Checklist</option><option value="MANTENCIONES">Mantenciones</option><option value="ORDENES_TRABAJO">Órdenes de servicio</option><option value="FALLAS">Fallas</option><option value="TALLERES">Talleres</option><option value="TALLER_EVALUACIONES">Evaluaciones de talleres</option><option value="VEHICULOS">Vehículos</option><option value="COMBUSTIBLE">Combustible</option><option value="DOCUMENTOS">Documentos</option><option value="PREDICCIONES">Análisis predictivo</option><option value="USUARIOS">Usuarios</option><option value="PRESUPUESTO_OPERACIONAL">Presupuesto Operacional</option></select><button id="btnReportRefresh" class="ghost">↻ Actualizar informe</button></div>
       <div class="advanced-filter-bar" data-filter-module="reportes">
         <label class="filter-field filter-search"><span>Buscar</span><input data-filter-search type="search" placeholder="Buscar dentro del informe"></label>
         <label class="filter-field"><span>Estado</span><select data-filter-state><option value="">Todos</option></select></label>
