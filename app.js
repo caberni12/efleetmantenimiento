@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.66';
+const WEB_VERSION='1.8.68';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],workshopEvaluations:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[

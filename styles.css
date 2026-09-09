@@ -2047,3 +2047,89 @@ body #nexoPanel.nexo-panel{
 .workshop-quality-bars{display:grid;gap:9px}.workshop-quality-row{display:grid;grid-template-columns:minmax(260px,1.6fr) minmax(160px,1fr) 58px;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #edf2f7}.workshop-quality-row:last-child{border-bottom:0}.workshop-quality-label{display:flex;gap:10px;align-items:flex-start}.workshop-quality-label>b{font-size:20px}.workshop-quality-label strong,.workshop-quality-label small{display:block}.workshop-quality-label small{margin-top:2px;color:#738298;font-size:10px;line-height:1.35}.workshop-quality-meter{height:10px;border-radius:99px;background:#edf2f7;overflow:hidden}.workshop-quality-meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2c7be5,#30b879)}.workshop-quality-row>em{font-style:normal;font-weight:900;text-align:right;color:#344860}
 .workshop-eval-modal{width:min(920px,94vw);max-height:92vh;overflow:auto}.workshop-eval-history-modal{width:min(1000px,94vw);max-height:92vh;overflow:auto}.workshop-eval-intro{margin:0 0 14px;color:#53657a}.workshop-eval-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.workshop-eval-links label,.workshop-eval-modal>div>label{display:grid;gap:5px;font-size:11px;font-weight:800;color:#596b80}.workshop-criteria-grid{display:grid;gap:8px;margin:12px 0}.workshop-score-row{display:grid!important;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:14px;padding:11px 12px;border:1px solid #e4ebf3;border-radius:13px;background:#f9fbfd}.workshop-score-row span b,.workshop-score-row span small{display:block}.workshop-score-row span small{font-weight:500;color:#75869a;margin-top:3px;line-height:1.35}.workshop-eval-preview{margin:12px 0;padding:12px 14px;border-radius:13px;background:#f3f8ff;border:1px solid #d7e7fb;color:#315477}.workshop-eval-preview strong{font-size:19px;color:#173a63}.workshop-history-summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:13px;background:#f6f9fc;margin-bottom:14px}.workshop-history-summary strong{font-size:22px}.workshop-history-summary span{padding:6px 9px;border-radius:9px;background:#fff;border:1px solid #e1e8f0;font-size:11px;font-weight:800}.workshop-eval-timeline{position:relative;padding-left:22px}.workshop-eval-timeline:before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:#dce6f0}.workshop-eval-timeline article{position:relative;display:grid;grid-template-columns:1fr;gap:8px;padding:0 0 18px 12px}.workshop-eval-timeline .timeline-dot{position:absolute;left:-21px;top:7px;width:12px;height:12px;border-radius:50%;background:#2c7be5;border:3px solid #fff;box-shadow:0 0 0 2px #bcd5f4}.workshop-eval-history-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.workshop-eval-history-head>strong{margin-right:auto}.workshop-history-criteria{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}.workshop-history-criteria span{display:flex;gap:6px;align-items:center;padding:7px 9px;background:#f8fafc;border-radius:9px;font-size:10px}.workshop-history-criteria span strong{margin-left:auto}
 @media(max-width:800px){.workshop-quality-row{grid-template-columns:1fr}.workshop-quality-row>em{text-align:left}.workshop-eval-links{grid-template-columns:1fr}.workshop-score-row{grid-template-columns:1fr}.workshop-history-criteria{grid-template-columns:1fr}}
+
+
+/* R1.8.68 · Modal Evaluación Talleres: cierre dentro del encabezado (heredado R1.8.67) */
+#workshopEvaluationModal .workshop-eval-modal,
+#workshopEvaluationHistoryModal .workshop-eval-history-modal{
+  position:relative;
+  padding:0!important;
+  overflow:hidden!important;
+  display:flex;
+  flex-direction:column;
+  max-height:92dvh!important;
+}
+#workshopEvaluationModal .modal-head,
+#workshopEvaluationHistoryModal .modal-head{
+  position:sticky;
+  top:0;
+  z-index:8;
+  flex:0 0 auto;
+  min-height:70px;
+  padding:16px 18px 14px;
+  background:#fff;
+  border-bottom:1px solid #e7edf4;
+  gap:14px;
+}
+#workshopEvaluationModal .modal-head>div,
+#workshopEvaluationHistoryModal .modal-head>div{
+  min-width:0;
+  flex:1 1 auto;
+}
+#workshopEvaluationClose,
+#workshopEvaluationHistoryClose{
+  position:static!important;
+  inset:auto!important;
+  flex:0 0 40px!important;
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  min-height:40px!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  line-height:1!important;
+  font-size:22px!important;
+  border:1px solid #cbd8e6!important;
+  border-radius:12px!important;
+  background:#f7faff!important;
+  color:#18324f!important;
+  transform:none!important;
+  translate:none!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#workshopEvaluationClose:hover,
+#workshopEvaluationHistoryClose:hover{
+  background:#eef6ff!important;
+  border-color:#0b67d1!important;
+  color:#0b67d1!important;
+}
+#workshopEvaluationBody,
+#workshopEvaluationHistoryBody{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  padding:16px 18px 4px;
+}
+#workshopEvaluationModal .modal-actions,
+#workshopEvaluationHistoryModal .modal-actions{
+  flex:0 0 auto;
+  margin:0!important;
+  padding:14px 18px 18px;
+  background:#fff;
+  border-top:1px solid #e7edf4;
+}
+@media(max-width:680px){
+  #workshopEvaluationModal,
+  #workshopEvaluationHistoryModal{padding:8px!important;}
+  #workshopEvaluationModal .workshop-eval-modal,
+  #workshopEvaluationHistoryModal .workshop-eval-history-modal{width:100%!important;max-height:96dvh!important;}
+  #workshopEvaluationModal .modal-head,
+  #workshopEvaluationHistoryModal .modal-head{padding:13px 14px 11px;min-height:62px;}
+  #workshopEvaluationBody,
+  #workshopEvaluationHistoryBody{padding:13px 14px 4px;}
+  #workshopEvaluationModal .modal-actions,
+  #workshopEvaluationHistoryModal .modal-actions{padding:12px 14px 14px;}
+}
