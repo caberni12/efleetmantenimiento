@@ -1,7 +1,7 @@
 // R1.8.0: Checklist protagonista + privacidad estricta + combustible Pro + voz + QR + nombres legibles
 const API_URL='https://hliqosobxhwdynhyubkc.supabase.co/functions/v1/super-handle';
 const DIRECTORY_URL='https://mykndxvshtfydsetcync.supabase.co/functions/v1/bdempresaflota-api';
-const WEB_VERSION='1.8.70';
+const WEB_VERSION='1.8.71';
 const S={rut:'',key:'',company:null,connection:null,token:localStorage.getItem('efm_token')||'',user:null,vehicles:[],drivers:[],users:[],documents:[],roleProfiles:[],rows:{},notifications:[],notificationPending:[],notificationTimer:null,notificationFetchPromise:null,notificationHydratePromise:null,notificationFastAt:0,notificationHydrateAt:0,perfilOperativo:null,lastPrediction:null,lastCheckinSaved:null,history:[],companyConfig:null,talleres:[],workshopEvaluations:[],checkinHistory:[],reportRows:[],orders:[],documentHistory:[],auditRows:[],fuelNearby:[],fuelPosition:null,activeWorkshopGeo:null,actionButton:null,actionButtonAt:0,qrStream:null,qrScanTimer:null,qrScanSeq:0,qrValidating:false,qrNativeMisses:0,qrDecoderPromise:null,liveSyncTimer:null,liveSyncBusy:false,liveSyncCursor:0,liveSyncPendingResources:[],voiceKind:null,voiceContext:null,voiceRecorder:null,voiceChunks:[],voiceBlob:null,loginSplashPending:false,checkinQrValidated:false,checkinQrVehicleId:'',currentNotificationDetailId:'',notificationPageFilter:'',previousView:'dashboard',catalogLoadedAt:{},dashboardDetailRows:[],chileDayKey:'',budgetSummary:null,budgetReportRows:[],budgetActionSaveHandler:null,moduleSearch:{},notificationRequestSeq:0,notificationAppliedSeq:0,notificationDataRequestSeq:0,notificationDataAppliedSeq:0,notificationMutationEpoch:0};
 
 const PERMISSION_MODULES=[
@@ -451,29 +451,69 @@ function renderFaultVehicleChart(rows=[]){
  const byClosed=[...all].sort((a,b)=>b.fallas_cerradas-a.fallas_cerradas||b.total_fallas-a.total_fallas);
  const most=byTotal[0],least=byLeast[0],mostOpen=byOpen[0],mostClosed=byClosed[0];
  const driver=x=>x.conductor_nombre||'Sin conductor vigente';
- const card=(cls,icon,label,x,metric)=>`<article class="fault-extreme ${cls}" data-life-vehicle="${esc(x.vehiculo_id)}"><span>${icon}</span><div><small>${label}</small><strong>${esc(x.patente||x.vehiculo_id||'Vehículo')}</strong><p>${metric} · 👤 ${esc(driver(x))}</p><em>Abiertas ${x.fallas_abiertas} · Cerradas ${x.fallas_cerradas} · Total ${x.total_fallas}</em></div></article>`;
+ const attrs=x=>`data-fault-trend-vehicle="${esc(x.vehiculo_id)}" data-fault-trend-patente="${esc(x.patente||x.vehiculo_id||'')}"`;
+ const card=(cls,icon,label,x,metric)=>`<button class="fault-extreme ${cls}" type="button" ${attrs(x)}><span>${icon}</span><div><small>${label}</small><strong>${esc(x.patente||x.vehiculo_id||'Vehículo')}</strong><p>${metric} · 👤 ${esc(driver(x))}</p><em>Abiertas ${x.fallas_abiertas} · Cerradas ${x.fallas_cerradas} · Total ${x.total_fallas}</em><u>Ver tendencia del vehículo →</u></div></button>`;
  summary.innerHTML=card('most','🚨','MÁS FALLAS',most,`${most.total_fallas} total`)+card('least','✅','MENOS FALLAS',least,`${least.total_fallas} total`)+card('open','⚠️','MÁS ABIERTAS',mostOpen,`${mostOpen.fallas_abiertas} abierta(s)`)+card('closed','✔️','MÁS CERRADAS',mostClosed,`${mostClosed.fallas_cerradas} cerrada(s)`);
  const top=byTotal.slice(0,10);
- chart.innerHTML=top.map(x=>{const total=Math.max(1,x.total_fallas),openPct=Math.round(x.fallas_abiertas/total*100),closedPct=Math.round(x.fallas_cerradas/total*100);return `<button class="fault-chart-row fault-chart-detailed" type="button" data-life-vehicle="${esc(x.vehiculo_id)}"><span class="fault-chart-label"><b>${esc(x.patente||x.vehiculo_id||'Vehículo')}</b><small>${esc(driver(x))}</small></span><span class="fault-state-bars"><span><small>Abiertas ${x.fallas_abiertas} · ${openPct}%</small><i class="fault-track"><b class="open" style="width:${openPct}%"></b></i></span><span><small>Cerradas ${x.fallas_cerradas} · ${closedPct}%</small><i class="fault-track"><b class="closed" style="width:${closedPct}%"></b></i></span></span><strong>${x.total_fallas}</strong></button>`}).join('');
+ chart.innerHTML=top.map(x=>{const total=Math.max(1,x.total_fallas),openPct=Math.round(x.fallas_abiertas/total*100),closedPct=Math.round(x.fallas_cerradas/total*100);return `<button class="fault-chart-row fault-chart-detailed" type="button" ${attrs(x)}><span class="fault-chart-label"><b>${esc(x.patente||x.vehiculo_id||'Vehículo')}</b><small>${esc([x.marca,x.modelo].filter(Boolean).join(' '))}</small><small>👤 ${esc(driver(x))}</small></span><span class="fault-state-bars"><span><small>Abiertas ${x.fallas_abiertas} · ${openPct}%</small><i class="fault-track"><b class="open" style="width:${openPct}%"></b></i></span><span><small>Cerradas ${x.fallas_cerradas} · ${closedPct}%</small><i class="fault-track"><b class="closed" style="width:${closedPct}%"></b></i></span></span><strong>${x.total_fallas}</strong></button>`}).join('');
 }
 function faultTrendArrow(cur,prev){cur=Number(cur||0);prev=Number(prev||0);return cur>prev?'↑':cur<prev?'↓':'→'}
 function faultSparkline(rows,key){const vals=rows.map(x=>Number(x[key]||0)),max=Math.max(1,...vals),w=260,h=58,pad=5;const pts=vals.map((v,i)=>`${pad+(w-pad*2)*(vals.length<=1?0:i/(vals.length-1))},${h-pad-(h-pad*2)*(v/max)}`).join(' ');return `<svg class="fault-sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" vector-effect="non-scaling-stroke"></polyline></svg>`}
-function renderFaultDailyTrends(rows=[]){const box=$('faultDailyTrends');if(!box)return;const list=[...(rows||[])].sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).slice(-14);if(!list.length){box.innerHTML='<div class="notification-empty">Aún no hay historial diario suficiente para mostrar tendencia de fallas.</div>';return}const panel=(title,key,pctKey,tone)=>{const total=list.reduce((a,x)=>a+Number(x[key]||0),0),last=list[list.length-1],prev=list[list.length-2]||{},trend=faultTrendArrow(last?.[key],prev?.[key]);return `<section class="fault-trend-panel ${tone}"><div class="fault-trend-head"><div><small>TENDENCIA DIARIA</small><h4>${title}</h4></div><strong>${trend} ${Number(last?.[key]||0)}</strong></div>${faultSparkline(list,key)}<div class="fault-trend-days">${list.map((x,i)=>{const p=Math.max(0,Math.min(100,Number(x[pctKey]||0))),arrow=faultTrendArrow(x[key],i?list[i-1][key]:x[key]);return `<div class="fault-day-row"><span>${new Date(String(x.fecha)+'T12:00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'})}</span><i><b style="width:${p}%"></b></i><strong>${p.toFixed(0)}%</strong><em>${arrow} ${Number(x[key]||0)}</em></div>`}).join('')}</div><footer>${total} falla(s) en el período · porcentaje diario sobre fallas del mismo día</footer></section>`};box.innerHTML=panel('Fallas abiertas','abiertas','pct_abiertas','open')+panel('Fallas cerradas','cerradas','pct_cerradas','closed')}
-async function loadDashboard(){
- const j=await api('dashboard');const r=j.resumen||{};
- const ks=[['Vehículos',r.vehiculos||0,'VEHICULOS','blue','🚙'],['Checklist hoy',r.checkins_hoy||0,'CHECKINS_HOY','green','📋'],['Fallas abiertas',r.fallas_abiertas||0,'FALLAS_ABIERTAS','amber','⚠️'],['Fallas críticas',r.fallas_criticas||0,'FALLAS_CRITICAS','red','🚨'],['Mantenciones',r.mantenciones_pendientes||0,'MANTENCIONES_PENDIENTES','amber','🔧'],['Costo mes','$ '+Number(r.costo_mes||0).toLocaleString('es-CL'),'COSTO_MES','teal','💰']];
- $('kpis').innerHTML=ks.map(([a,b,action,tone,icon])=>dashboardKpi(a,b,action,tone,icon)).join('');
- const rows=j.saludVehiculos||[];
- const avgHealth=rows.length?Math.round(rows.reduce((a,x)=>a+Number(x.salud_porcentaje||0),0)/rows.length):0;
- const avgRisk=rows.length?Math.round(rows.reduce((a,x)=>a+Number(x.riesgo_porcentaje||0),0)/rows.length):0;
- const highestRisk=rows.length?[...rows].sort((a,b)=>Number(b.riesgo_porcentaje||0)-Number(a.riesgo_porcentaje||0))[0]:null;
- const riskDetail=highestRisk?`${highestRisk.patente||highestRisk.vehiculo_patente||'Vehículo'}${[highestRisk.marca,highestRisk.modelo].filter(Boolean).length?' · '+[highestRisk.marca,highestRisk.modelo].filter(Boolean).join(' '):''} · Salud ${Math.round(Number(highestRisk.salud_porcentaje||0))}%`:'Sin salud vehicular calculada';
- const fleet=Math.max(1,Number(r.vehiculos||rows.length||1));
- const decisions=j.decisionKpis||[];
- $('fleetRings').innerHTML=ringKpi('Salud de flota',`${avgHealth}%`,avgHealth,avgHealth<50?'red':avgHealth<75?'amber':'green','Promedio de unidades','SALUD_FLOTA')+ringKpi('Riesgo operacional',`${avgRisk}%`,avgRisk,avgRisk>=70?'red':avgRisk>=30?'amber':'green',riskDetail,'RIESGO_FLOTA')+ringKpi('Mantención pendiente',String(r.mantenciones_pendientes||0),Math.min(100,Number(r.mantenciones_pendientes||0)/fleet*100),Number(r.mantenciones_pendientes||0)?'amber':'green','Ligada a vehículos','MANTENCIONES_PENDIENTES')+decisions.map(x=>ringKpi(x.titulo,x.valorTexto||x.patente||'—',100,/FALLA|COSTO/.test(String(x.tipo||''))?'amber':/CONDUCTOR/.test(String(x.tipo||''))?'teal':'blue',`${x.detalle||''}${x.conductor_nombre?' · Conductor: '+x.conductor_nombre:''}${x.accion_sugerida?' · Decisión: '+x.accion_sugerida:''}`,x.vehiculo_id?`VEHICULO:${x.vehiculo_id}`:x.conductor_id?`CONDUCTOR:${x.conductor_id}`:'')).join('');
- $('healthRows').innerHTML=rows.length?rows.map(x=>`<div class="table-row dashboard-health-clickable" data-life-vehicle="${esc(x.vehiculo_id||x.id)}" role="button" tabindex="0"><strong>${esc(x.patente||x.vehiculo_patente||'Vehículo asociado')}</strong><span>${esc(x.marca||'')} ${esc(x.modelo||'')}</span><span>Salud ${Number(x.salud_porcentaje||0).toFixed(0)}%</span><div class="health-bar"><span style="width:${Math.max(0,Math.min(100,Number(x.salud_porcentaje||0)))}%"></span></div><span>Riesgo ${Number(x.riesgo_porcentaje||0).toFixed(0)}%</span></div>`).join(''):'<p class="muted">Aún no hay indicadores de salud calculados.</p>';
- renderFaultVehicleChart(j.fallasVehiculo||[]);
- renderFaultDailyTrends(j.fallasDiarias||[]);
+function faultVehicleMetaMap(rows=[]){const m=new Map();for(const x of rows||[])m.set(String(x.vehiculo_id),x);return m}
+function faultVehicleChipList(ids=[],meta=new Map()){const unique=[...new Set((ids||[]).map(String).filter(Boolean))];if(!unique.length)return '<small class="fault-day-vehicles empty">Sin vehículos asociados</small>';return `<span class="fault-day-vehicles">${unique.slice(0,5).map(id=>{const v=meta.get(id)||{},pat=v.patente||vehicleName(id)||id,label=[pat,v.marca,v.modelo].filter(Boolean).join(' · ');return `<button type="button" class="fault-vehicle-chip" data-fault-trend-vehicle="${esc(id)}" data-fault-trend-patente="${esc(pat)}">${esc(label)}</button>`}).join('')}${unique.length>5?`<small>+${unique.length-5} más</small>`:''}</span>`}
+function renderFaultDailyTrends(rows=[],vehicles=[]){
+ const box=$('faultDailyTrends');if(!box)return;
+ const list=[...(rows||[])].sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))).slice(-14),meta=faultVehicleMetaMap(vehicles);
+ if(!list.length){box.innerHTML='<div class="notification-empty">Aún no hay historial diario suficiente para mostrar tendencia de fallas.</div>';return}
+ const panel=(title,key,pctKey,tone,vehicleKey)=>{
+   const total=list.reduce((a,x)=>a+Number(x[key]||0),0),last=list[list.length-1],prev=list[list.length-2]||{},trend=faultTrendArrow(last?.[key],prev?.[key]);
+   return `<section class="fault-trend-panel ${tone}"><div class="fault-trend-head"><div><small>TENDENCIA DIARIA</small><h4>${title}</h4></div><strong>${trend} ${Number(last?.[key]||0)}</strong></div>${faultSparkline(list,key)}<div class="fault-trend-days">${list.map((x,i)=>{const p=Math.max(0,Math.min(100,Number(x[pctKey]||0))),arrow=faultTrendArrow(x[key],i?list[i-1][key]:x[key]);return `<div class="fault-day-block"><div class="fault-day-row"><span>${new Date(String(x.fecha)+'T12:00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'})}</span><i><b style="width:${p}%"></b></i><strong>${p.toFixed(0)}%</strong><em>${arrow} ${Number(x[key]||0)}</em></div>${faultVehicleChipList(x[vehicleKey]||[],meta)}</div>`}).join('')}</div><footer>${total} falla(s) en el período · selecciona una patente para ver su tendencia individual</footer></section>`;
+ };
+ box.innerHTML=panel('Fallas abiertas','abiertas','pct_abiertas','open','vehiculos_abiertas')+panel('Fallas cerradas','cerradas','pct_cerradas','closed','vehiculos_cerradas');
+}
+
+function faultTrendInputDate(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
+function ensureFaultVehicleTrendModal(){
+ let modal=$('faultVehicleTrendModal');if(modal)return modal;
+ document.body.insertAdjacentHTML('beforeend',`<div id="faultVehicleTrendModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="faultVehicleTrendTitle"><div class="modal-card fault-vehicle-trend-modal-card"><div class="modal-head"><div><span class="module-eyebrow">TENDENCIA INDIVIDUAL</span><h3 id="faultVehicleTrendTitle">Fallas por vehículo</h3><small>Filtra por patente, marca o modelo. Si coinciden varias patentes, se muestran por separado.</small></div><button id="faultVehicleTrendClose" type="button" aria-label="Cerrar">×</button></div><div class="fault-vehicle-trend-modal-body"><div class="fault-trend-filter-grid"><label>Patente, marca o modelo<input id="faultTrendSearch" type="search" placeholder="Ej.: GLJD30, Geely, Hilux"></label><label>Desde<input id="faultTrendFrom" type="date"></label><label>Hasta<input id="faultTrendTo" type="date"></label><div class="fault-trend-filter-actions"><button id="faultTrendClear" type="button" class="ghost">Limpiar</button><button id="faultTrendApply" type="button" class="primary">Aplicar</button></div></div><div id="faultTrendStatus" class="muted"></div><div id="faultVehicleTrendResults" class="fault-vehicle-trend-results"></div></div><div class="modal-actions"><button id="faultVehicleTrendDone" class="primary" type="button">Cerrar</button></div></div></div>`);
+ modal=$('faultVehicleTrendModal');
+ const close=()=>modal.classList.add('hidden');
+ $('faultVehicleTrendClose').onclick=close;$('faultVehicleTrendDone').onclick=close;
+ modal.addEventListener('click',e=>{if(e.target===modal)close()});
+ $('faultTrendApply').onclick=()=>loadFaultVehicleTrendModal();
+ $('faultTrendClear').onclick=()=>{const to=new Date(),from=new Date(Date.now()-13*86400000);$('faultTrendSearch').value='';$('faultTrendFrom').value=faultTrendInputDate(from);$('faultTrendTo').value=faultTrendInputDate(to);$('faultVehicleTrendResults').innerHTML='';$('faultTrendStatus').textContent='Escribe una patente, marca o modelo y pulsa Aplicar.'};
+ return modal;
+}
+async function openFaultVehicleTrendModal(vehicleId='',patente=''){
+ const modal=ensureFaultVehicleTrendModal(),to=new Date(),from=new Date(Date.now()-13*86400000);
+ $('faultTrendSearch').value=patente||vehicleName(vehicleId)||vehicleId||'';
+ $('faultTrendFrom').value=faultTrendInputDate(from);$('faultTrendTo').value=faultTrendInputDate(to);
+ modal.dataset.initialVehicleId=vehicleId||'';modal.dataset.initialSearch=$('faultTrendSearch').value||'';
+ openOverlay('faultVehicleTrendModal');
+ await loadFaultVehicleTrendModal(vehicleId||'');
+}
+function vehicleTrendDayPanel(series=[],title='',key='',pctKey='',tone='open'){
+ const total=series.reduce((a,x)=>a+Number(x[key]||0),0),last=series[series.length-1]||{},prev=series[series.length-2]||{},direction=faultTrendArrow(last[key],prev[key]);
+ return `<section class="fault-trend-panel ${tone} vehicle-specific"><div class="fault-trend-head"><div><small>POR DÍA</small><h4>${esc(title)}</h4></div><strong>${direction} ${Number(last[key]||0)}</strong></div>${faultSparkline(series,key)}<div class="fault-trend-days">${series.map((x,i)=>{const p=Math.max(0,Math.min(100,Number(x[pctKey]||0))),arrow=faultTrendArrow(x[key],i?series[i-1][key]:x[key]);return `<div class="fault-day-row compact"><span>${new Date(String(x.fecha)+'T12:00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'})}</span><i><b style="width:${p}%"></b></i><strong>${p.toFixed(0)}%</strong><em>${arrow} ${Number(x[key]||0)}</em></div>`}).join('')}</div><footer>${total} evento(s) en el período</footer></section>`;
+}
+function renderFaultVehicleTrendResults(rows=[]){
+ const box=$('faultVehicleTrendResults');if(!box)return;
+ if(!rows.length){box.innerHTML='<div class="notification-empty">No se encontraron vehículos para ese filtro y período.</div>';return}
+ box.innerHTML=rows.map(v=>{const r=v.resumen||{},series=v.serie||[],last=r.ultima_falla,lastClose=r.ultimo_cierre;return `<article class="fault-vehicle-trend-card"><header><div><small>PATENTE</small><h3>${esc(v.patente||v.vehiculo_id)}</h3><p>${esc([v.marca,v.modelo].filter(Boolean).join(' ')||'Vehículo')} · 👤 ${esc(v.conductor_nombre||'Sin conductor vigente')}</p></div><div class="fault-trend-health"><span>❤️ Salud <b>${Math.round(Number(v.salud_porcentaje||0))}%</b></span><span>⚠️ Riesgo <b>${Math.round(Number(v.riesgo_porcentaje||0))}%</b></span></div></header><div class="fault-trend-summary-grid"><div><small>FALLAS DEL PERÍODO</small><strong>${Number(r.fallas_periodo||0)}</strong></div><div><small>ABIERTAS ACTUALES</small><strong>${Number(r.abiertas_actuales||0)}</strong></div><div><small>CERRADAS PERÍODO</small><strong>${Number(r.cerradas_periodo||0)}</strong></div><div><small>CRÍTICAS PERÍODO</small><strong>${Number(r.criticas_periodo||0)}</strong></div></div><div class="fault-vehicle-trend-pair">${vehicleTrendDayPanel(series,'Fallas abiertas','abiertas','pct_abiertas','open')}${vehicleTrendDayPanel(series,'Fallas cerradas','cerradas','pct_cerradas','closed')}</div>${vehicleTrendDayPanel(series,'Fallas críticas','criticas','pct_criticas','critical')}<div class="fault-trend-last-events"><p><b>Última falla:</b> ${last?`${esc(last.titulo||'Falla')} · ${new Date(last.fecha).toLocaleString('es-CL')}`:'Sin fallas detectadas en el período'}</p><p><b>Último cierre:</b> ${lastClose?`${esc(lastClose.titulo||'Falla cerrada')} · ${new Date(lastClose.fecha).toLocaleString('es-CL')}`:'Sin cierres en el período'}</p>${v.explicacion_salud?`<p><b>Estado técnico:</b> ${esc(v.explicacion_salud)}</p>`:''}</div></article>`}).join('');
+}
+async function loadFaultVehicleTrendModal(exactVehicleId=''){
+ const search=String($('faultTrendSearch')?.value||'').trim(),from=$('faultTrendFrom')?.value||'',to=$('faultTrendTo')?.value||'',status=$('faultTrendStatus'),box=$('faultVehicleTrendResults'),btn=$('faultTrendApply');
+ if(!from||!to){toast('Selecciona fecha desde y hasta');return}
+ loading(btn,true);
+ if(status)status.textContent='Consultando tendencia por vehículo…';if(box)box.innerHTML='<div class="notification-empty">Cargando…</div>';
+ try{
+   const payload={buscar:search,fecha_desde:from,fecha_hasta:to};
+   if(exactVehicleId&&search===String($('faultVehicleTrendModal')?.dataset.initialSearch||''))payload.vehiculo_id=exactVehicleId;
+   const j=await api('TENDENCIA_FALLAS_VEHICULO',payload,true),rows=j.rows||[];
+   renderFaultVehicleTrendResults(rows);
+   if(status)status.textContent=rows.length?`${rows.length} vehículo(s) · cada patente se presenta por separado · ${j.filtros?.fecha_desde||from} a ${j.filtros?.fecha_hasta||to}`:'Sin coincidencias para el filtro seleccionado.';
+ }catch(e){if(box)box.innerHTML=`<div class="notification-empty">No fue posible cargar la tendencia: ${esc(e.message||'ERROR')}</div>`;if(status)status.textContent='Revisa el filtro e intenta nuevamente.'}
+ finally{loading(btn,false)}
 }
 
 async function loadProfileView(){
@@ -2209,6 +2249,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const workshopEvalHistory=e.target.closest('[data-workshop-eval-history]');if(workshopEvalHistory){openWorkshopEvaluationHistory(workshopEvalHistory.dataset.workshopEvalHistory);return;}
    const orderFromMaintenance=e.target.closest('[data-order-from-maintenance]');if(orderFromMaintenance){openOrderFromMaintenance(orderFromMaintenance.dataset.orderFromMaintenance);return;}
    const orderPdf=e.target.closest('[data-order-pdf]');if(orderPdf){downloadServiceOrderPdf(orderPdf.dataset.orderPdf);return;}
+   const faultTrendVehicle=e.target.closest('[data-fault-trend-vehicle]');if(faultTrendVehicle){openFaultVehicleTrendModal(faultTrendVehicle.dataset.faultTrendVehicle,faultTrendVehicle.dataset.faultTrendPatente||'');return;}
    const lifeVehicle=e.target.closest('[data-life-vehicle]');if(lifeVehicle){openVehicleLife(lifeVehicle.dataset.lifeVehicle);return;}
    const lifeDriver=e.target.closest('[data-life-driver]');if(lifeDriver){openDriverLife(lifeDriver.dataset.lifeDriver);return;}
    const driverDocs=e.target.closest('[data-driver-docs]');if(driverDocs){openDriverDocuments(driverDocs.dataset.driverDocs);return;}
